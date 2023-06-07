@@ -157,7 +157,7 @@ class Graphene_SS:
         # setting |B| > Delta, -alpha*mu(+-)sqrt(B^2-Delta^2) > 0
         z[(-alpha*self.mu + sign*torch.sqrt(self.B**2-self.Delta**2))<0] = float('nan')
         z[z>2] = float('nan')
-        z[z<-1/4] = float('nan')
+        z[z<=-1/4] = float('nan')
         # setting u^2-(z_i-u^2)^2 > 0
         deno = u**2 - (z-u**2)**2
         deno[deno<=0] = float('nan') 
@@ -166,7 +166,6 @@ class Graphene_SS:
 
     def total(self):
         D_total_xx = self.intra() + self.inter()
-        print(D_total_xx.shape)
         return D_total_xx 
 ############################################################################# Lorentzian function
 ############################################################################
