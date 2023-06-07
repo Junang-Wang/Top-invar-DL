@@ -17,7 +17,7 @@ class Graphene_Vec:
         Delta:     superconducting order parameters, default: 1
         nx:        number of lattice sites in x direction
         ny:        number of lattice sites in y direction 
-
+\\飞书.lnk
         Output vectorized tensor in the order of
         t,mu,B,kx,ky
         """
@@ -142,8 +142,8 @@ class Graphene_SS:
         # z_plus = 1/4*( ((-alpha*mu + sqrt(B**2-Delta**2))/t)**2 - 1 )
         z,deno = self.define_z(u,alpha,1)
 
-        Integrate_delta = 9/(2*torch.pi**2)*(torch.nan_to_num(( (z/u-u)**2*(1-u**2).sqrt() )/( abs(self.B)*deno.sqrt()*(4*z+1).sqrt()*2*self.t*(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=-1)
-        
+        Integrate_delta = 9/(2*torch.pi**2)*(torch.nan_to_num(( (z/u-u)**2*(1-u**2).sqrt() )/( abs(self.B)*deno.sqrt()*(4*z+1).sqrt()*2*self.t*(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=(-1,-2))
+
         # z_minus = 1/4*( ((-alpha*mu - sqrt(B**2-Delta**2))/t)**2 - 1 )
         z,deno = self.define_z(u,alpha,-1)
         
