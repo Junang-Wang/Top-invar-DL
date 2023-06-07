@@ -142,12 +142,12 @@ class Graphene_SS:
         # z_plus = 1/4*( ((-alpha*mu + sqrt(B**2-Delta**2))/t)**2 - 1 )
         z,deno = self.define_z(u,alpha,1)
 
-        Integrate_delta = 9/(2*torch.pi**2)*(torch.nan_to_num(( self.t**2*(z/u-u)**2*(1-u**2).sqrt() )/( abs(self.B)*deno.sqrt()*(4*z+1).sqrt()*2*self.t*(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=(-1,-2))
+        Integrate_delta = 9/(2*torch.pi**2)*(torch.nan_to_num(( self.t**2*deno.sqrt() )/( abs(self.B)*(4*z+1).sqrt()*2*self.t*abs(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=(-1,-2))
 
         # z_minus = 1/4*( ((-alpha*mu - sqrt(B**2-Delta**2))/t)**2 - 1 )
         z,deno = self.define_z(u,alpha,-1)
         
-        Integrate_delta += 9/(2*torch.pi**2)*(torch.nan_to_num(( self.t**2*(z/u-u)**2*(1-u**2).sqrt() )/( abs(self.B)*deno.sqrt()*(4*z+1).sqrt()*2*self.t*(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=(-1,-2))
+        Integrate_delta += 9/(2*torch.pi**2)*(torch.nan_to_num(( self.t**2*deno.sqrt() )/( abs(self.B)*(4*z+1).sqrt()*2*self.t*abs(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=(-1,-2))
 
         return Integrate_delta
     
