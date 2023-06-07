@@ -133,30 +133,37 @@ class Graphene_SS:
         return D_inter_xx
     
     def Integrated_delta(self,G,alpha):
-        """Adopted sampling around ky where E-B ~ 0, Integrate Delta^2* dx_eps^2/E^2 delta(E-B)"""
+        """Integrate the part including delta function, by converting kx,ky to u,z space. The function output a [t,mu0,mu,B] tensor"""
         if G.min() >= 0: return 0
-        ny = self.ny
-        # find boundary for abs(G)<0.01*t, x_extre[:,:,:,:,0] is (x_max-x_min)/ny, [1] is x_min for one Dirac cone
-        x_extre, y_extre = Boundary(G,self.t,torch.tensor(ny))        
+        # setting u, u=cos3/2kx in[-1,1]; v=cos sqrt(3)/2ky
+        u = torch.linspace(-1,1,10000).reshape(1,1,1,1,1,-1).to('cuda')
         
-        # print((x_extre[:,:,:,:,0:1].unsqueeze(-1)).shape)
-        # print((torch.arange(0,ny).reshape(self.kx.shape)).shape)
-        k_x = x_extre[:,:,:,:,0:1].unsqueeze(-1)*(torch.arange(0,ny).reshape(self.kx.shape)).to('cuda')+ x_extre[:,:,:,:,1:].unsqueeze(-1).to('cuda') 
+        # setting z_i = u(u+v); in [-1/4,2]
+        # z_plus = 1/4*( ((-alpha*mu + sqrt(B**2-Delta**2))/t)**2 - 1 )
+        z,deno = self.define_z(alpha,1)
 
-        k_y = y_extre[:,:,:,:,0:1].unsqueeze(-2)*(torch.arange(0,ny).reshape(self.ky.shape)).to('cuda') + y_extre[:,:,:,:,1:].unsqueeze(-2).to('cuda')
-
-        # compute energy in zoom in region        
-        epsilon_0 = self.t*torch.sqrt(abs(3+2*torch.cos(sqrt(3)*k_y) + 4*torch.cos(sqrt(3)/2*k_y)*torch.cos(3/2*k_x)) )
-
-        E_zoom =  (( epsilon_0  + alpha* self.mu  )**2 + self.Delta**2).sqrt()
-
-        epsilon_p_kx = - torch.nan_to_num((self.t**2 * (3*torch.cos(sqrt(3)/2*k_y)*torch.sin(3/2*k_x) ))/epsilon_0,nan=0,posinf=0,neginf=0)
-
-        eta = x_extre[:,:,:,:,0:1].unsqueeze(-1)/ny *10
+        Integrate_delta = 9/(2*torch.pi**2)*(torch.nan_to_num(( (z/u-u)**2*(1-u**2).sqrt() )/( abs(self.B)*deno.sqrt()*(4*z+1).sqrt()*2*self.t*(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=-1)
         
-        Integrate_delta = self.Delta**2 * ( ( epsilon_p_kx**2/E_zoom**2 )*(Lorentzian(E_zoom - abs(self.B),eta=eta) )).mean(dim=(-2,-1))*(x_extre[:,:,:,:,0])*2 # the reason of the multiplication of 2 is for the 2 Dirac cones.
+        # z_minus = 1/4*( ((-alpha*mu - sqrt(B**2-Delta**2))/t)**2 - 1 )
+        z,deno = self.define_z(alpha,-1)
+        
+        Integrate_delta += 9/(2*torch.pi**2)*(torch.nan_to_num(( (z/u-u)**2*(1-u**2).sqrt() )/( abs(self.B)*deno.sqrt()*(4*z+1).sqrt()*2*self.t*(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=(-1,-2))
+
         return Integrate_delta
     
+    def define_z(self,alpha,sign):
+        # setting z_i, u(u+v); [-1/4,2]
+        z = 1/4*( ((-alpha*self.mu + sign*torch.sqrt(self.B**2-self.Delta**2))/self.t)**2 - 1 ) # torch.sqrt(-1) = nan
+        # setting |B| > Delta, -alpha*mu(+-)sqrt(B^2-Delta^2) > 0
+        z[(-alpha*self.mu + sign*torch.sqrt(self.B**2-self.Delta**2))<0] = float('nan')
+        z[z>2] = float('nan')
+        z[z<-1/4] = float('nan')
+        # setting u^2-(z_i-u^2)^2 > 0
+        deno = u**2 - (z-u**2)**2
+        deno[deno<=0] = float('nan') 
+        return z,deno
+        
+
     def total(self):
         D_total_xx = self.intra() + self.inter()
         print(D_total_xx.shape)
@@ -179,38 +186,3 @@ def Occupy_f(E,B=0,device='cuda'):
     f = torch.heaviside( B+E, values= values) - torch.heaviside(B-E, values=values)
     return f
 
-############################################################################
-# Boundary function
-############################################################################
-#@torch.jit.script
-def Boundary(G,threshold,ny):
-    """This function compute the boundary(kx,ky plane) of G<0.01*threshold"""
-
-    # Define the range of x and y values
-    x = torch.linspace(0, 4*torch.pi/3, ny)
-    y = torch.linspace(-2*torch.pi/sqrt(3), 2*torch.pi/sqrt(3),ny)
-
-    # focus on the upper Dirac point region
-    X, Y = torch.meshgrid(x, y)
-    mask1 = sqrt(3)*torch.abs(X) >= torch.abs(Y)
-    mask2 = torch.abs(-sqrt(3)*X+4*torch.pi*sqrt(3)/3) >= torch.abs(Y)
-    mask3 = Y >=0
-    mask = mask1*mask2*mask3
-    mask = 100*((~mask).reshape(1,1,1,1,mask.shape[0],mask.shape[1]).long().to('cuda'))
-    #G = mask.reshape(1,1,1,1,mask.shape[0],mask.shape[1]).to('cuda') * G      
-    
-
-    # find the index abs(G)< threshold
-    index = torch.argwhere((abs(G)+mask)<0.01*threshold).to('cpu') # index is a N by 6  matrix, each row is a sample of abs(G) including 6 indeices for t,mu0,mu,B,kx,ky
-    
-    x_extre = torch.zeros(G.shape[0],G.shape[1],G.shape[2],G.shape[3],2).to('cuda')
-    y_extre = torch.zeros_like(x_extre)
-    for i in range(index.shape[0]):
-        cond = (index[:,0]==index[i,0])* (index[:,1]==index[i,1])*(index[:,2]==index[i,2])* (index[:,3]==index[i,3])
-        #x_extre[index[i,0],index[i,1],index[i,2],index[i,3],:] = torch.tensor([1.,2.]).to('cuda')
-
-        
-        x_extre[index[i,0],index[i,1],index[i,2],index[i,3],:] =torch.tensor([(x[index[cond][:,4].max()]-x[index[cond][:,4].min()])/ny,x[index[cond][:,4].min()]]).to('cuda') #find the extremum of x
-
-        y_extre[index[i,0],index[i,1],index[i,2],index[i,3]] = torch.tensor([(y[index[cond][:,5].max()]-y[index[cond][:,5].min()])/ny,y[index[cond][:,5].min()]]).to('cuda') #find the extremum of x
-    return x_extre,y_extre
