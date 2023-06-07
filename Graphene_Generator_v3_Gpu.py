@@ -140,18 +140,18 @@ class Graphene_SS:
         
         # setting z_i = u(u+v); in [-1/4,2]
         # z_plus = 1/4*( ((-alpha*mu + sqrt(B**2-Delta**2))/t)**2 - 1 )
-        z,deno = self.define_z(alpha,1)
+        z,deno = self.define_z(u,alpha,1)
 
         Integrate_delta = 9/(2*torch.pi**2)*(torch.nan_to_num(( (z/u-u)**2*(1-u**2).sqrt() )/( abs(self.B)*deno.sqrt()*(4*z+1).sqrt()*2*self.t*(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=-1)
         
         # z_minus = 1/4*( ((-alpha*mu - sqrt(B**2-Delta**2))/t)**2 - 1 )
-        z,deno = self.define_z(alpha,-1)
+        z,deno = self.define_z(u,alpha,-1)
         
         Integrate_delta += 9/(2*torch.pi**2)*(torch.nan_to_num(( (z/u-u)**2*(1-u**2).sqrt() )/( abs(self.B)*deno.sqrt()*(4*z+1).sqrt()*2*self.t*(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=(-1,-2))
 
         return Integrate_delta
     
-    def define_z(self,alpha,sign):
+    def define_z(self,u,alpha,sign):
         # setting z_i, u(u+v); [-1/4,2]
         z = 1/4*( ((-alpha*self.mu + sign*torch.sqrt(self.B**2-self.Delta**2))/self.t)**2 - 1 ) # torch.sqrt(-1) = nan
         # setting |B| > Delta, -alpha*mu(+-)sqrt(B^2-Delta^2) > 0
