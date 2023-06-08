@@ -104,6 +104,7 @@ class Graphene_SS:
         E_p = torch.sqrt(self.epsilon_p**2 + self.Delta**2)
         E_m = torch.sqrt(self.epsilon_m**2 + self.Delta**2)
         D_intra_xx = (self.Delta**2 *( ( ( self.epsilon_p_kx**2/E_p**3 )*(Occupy_f(E_p,self.B) ) + ( self.epsilon_p_kx**2/E_m**3 )*(Occupy_f(E_m,self.B) )) ).mean(dim=(-2,-1))  /2 -self.Integrated_delta(E_p - abs(self.B),1) - self.Integrated_delta(E_m - abs(self.B),-1) ).cpu() # the last division of 2 is for the first brillouin zone
+        
         torch.cuda.empty_cache()
 
 
@@ -149,6 +150,7 @@ class Graphene_SS:
         
         Integrate_delta += 9/(2*torch.pi**2)*(torch.nan_to_num(( self.t**2*deno.sqrt() )/( abs(self.B)*(4*z+1).sqrt()*2*self.t*abs(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=(-1,-2))
 
+
         return Integrate_delta
     
     def define_z(self,u,alpha,sign):
@@ -182,6 +184,6 @@ def Occupy_f(E,B=0,device='cuda'):
     #-----------------------
     #Output: shape = [M,Y,X,Kx,Ky,B,mu,2,1]
     values = torch.tensor([0.5]).to(device)
-    f = torch.heaviside( B+E, values= values) - torch.heaviside(B-E, values=values)
+    f = torch.heaviside( torch.round(B+E,decimals=5), values= values) - torch.heaviside(torch.round(B-E,decimals=5), values=values)
     return f
 
