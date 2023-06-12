@@ -137,18 +137,18 @@ class Graphene_SS:
         """Integrate the part including delta function, by converting kx,ky to u,z space. The function output a [t,mu0,mu,B] tensor"""
         if G.min() >= 0: return 0
         # setting u, u=cos3/2kx in[-1,1]; v=cos sqrt(3)/2ky
-        u = torch.linspace(-1,1,10000).reshape(1,1,1,1,1,-1).to('cuda')
+        u = torch.cos(torch.linspace(-torch.pi,torch.pi,10000)).reshape(1,1,1,1,1,-1).to('cuda')
         
         # setting z_i = u(u+v); in [-1/4,2]
         # z_plus = 1/4*( ((-alpha*mu + sqrt(B**2-Delta**2))/t)**2 - 1 )
         z,deno = self.define_z(u,alpha,1)
 
-        Integrate_delta = 9/(2*torch.pi**2)*(torch.nan_to_num(( self.t**2*deno.sqrt() )/( abs(self.B)*(4*z+1).sqrt()*2*self.t*abs(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=(-1,-2))
+        Integrate_delta = 9/(2*torch.pi**2)*(torch.nan_to_num(( self.t*deno.sqrt() )/( abs(self.B)*(4*z+1).sqrt()*2*abs(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=(-1,-2))
 
         # z_minus = 1/4*( ((-alpha*mu - sqrt(B**2-Delta**2))/t)**2 - 1 )
         z,deno = self.define_z(u,alpha,-1)
         
-        Integrate_delta += 9/(2*torch.pi**2)*(torch.nan_to_num(( self.t**2*deno.sqrt() )/( abs(self.B)*(4*z+1).sqrt()*2*self.t*abs(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=(-1,-2))
+        Integrate_delta += 9/(2*torch.pi**2)*(torch.nan_to_num(( self.t*deno.sqrt() )/( abs(self.B)*(4*z+1).sqrt()*2*abs(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=(-1,-2))
 
 
         return Integrate_delta
@@ -162,7 +162,7 @@ class Graphene_SS:
         z[z<=-1/4] = float('nan')
         # setting u^2-(z_i-u^2)^2 > 0
         deno = u**2 - (z-u**2)**2
-        deno[deno<=0] = float('nan') 
+        deno[deno<0] = float('nan') 
         return z,deno
         
 
