@@ -19,14 +19,14 @@ class Analytic_D:
         mediate = (self.mu**2 + self.Delta**2).sqrt()
         mask = self.mu == 0
 
-        D_inter = ~mask*torch.nan_to_num( self.n*self.Delta**2/ 2 /torch.pi / abs(self.mu)* (  self.step_f(self.Delta-abs(self.B))*torch.log((mediate+abs(self.mu))/self.Delta ) 
-                                                                     + self.step_f(abs(self.B)-self.Delta)*self.step_f(mediate-abs(self.B))*torch.log((mediate+abs(self.mu))/((self.B**2-self.Delta**2).sqrt()+abs(self.B)) )),nan=0  ) \
-                                                                     + mask*self.n*self.Delta/ 2 /torch.pi * self.step_f(self.Delta-abs(self.B))
+        D_inter = self.n*self.Delta**2/ 2 /torch.pi*(torch.nan_to_num( 1 / abs(self.mu)*self.step_f(self.Delta-abs(self.B))*torch.log((mediate+abs(self.mu))/self.Delta ),nan=0) 
+                                                                    + torch.nan_to_num(1 / abs(self.mu)*self.step_f(abs(self.B)-self.Delta)*self.step_f(mediate-abs(self.B))*torch.log((mediate+abs(self.mu))/((self.B**2-self.Delta**2).sqrt()+abs(self.B)) ),nan=0  )) \
+                                                                    + mask*self.n*self.Delta/ 2 /torch.pi * self.step_f(self.Delta-abs(self.B))
         
         return D_inter
     
     def total(self):
-        return self.intra() + self.inter()
+        return  self.inter()
     
     def trivial(self):
         """This function return SS for trivial model which is a [1,mu0,mu_offset,B] tensor """

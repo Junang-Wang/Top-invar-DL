@@ -122,7 +122,7 @@ class Graphene_SS:
         
         E_p = torch.sqrt(self.epsilon_p**2 + self.Delta**2)
         E_m = torch.sqrt(self.epsilon_m**2 + self.Delta**2) 
-        D_inter_xx = ((4*self.Delta**2 *self.state_p_kx_m**2* ( torch.nan_to_num( ( self.epsilon_0 / self.mu )*(- Occupy_f(E_p,self.B)/E_p + Occupy_f(E_m,self.B)/E_m ),nan=0 )+ 0*masker_mu_neq_0* 2*self.epsilon_p**2/E_p**3 *(Occupy_f(E_p,self.B) - E_p*Lorentzian(E_p - abs(self.B)))  )).mean(dim=(-2,-1)) /2).cpu()
+        D_inter_xx = ((4*self.Delta**2 *self.state_p_kx_m**2* (  ( self.epsilon_0 / self.mu )*(- Occupy_f(E_p,self.B)/E_p + Occupy_f(E_m,self.B)/E_m )  )).mean(dim=(-2,-1)) /2).cpu()
         torch.cuda.empty_cache()
 
 
@@ -167,7 +167,7 @@ class Graphene_SS:
         
 
     def total(self):
-        D_total_xx = self.intra() + self.inter()
+        D_total_xx = self.inter()
         return D_total_xx 
 ############################################################################# Lorentzian function
 ############################################################################
@@ -184,6 +184,7 @@ def Occupy_f(E,B=0,device='cuda'):
     #-----------------------
     #Output: shape = [M,Y,X,Kx,Ky,B,mu,2,1]
     values = torch.tensor([0.5]).to(device)
-    f = torch.heaviside( torch.round(B+E,decimals=5), values= values) - torch.heaviside(torch.round(B-E,decimals=5), values=values)
+    #f = torch.heaviside( torch.round(B+E,decimals=5), values= values) - torch.heaviside(torch.round(B-E,decimals=5), values=values)
+    f = torch.heaviside( E-abs(B), values= values)
     return f
 
