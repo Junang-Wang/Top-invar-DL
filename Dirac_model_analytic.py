@@ -26,7 +26,7 @@ class Analytic_D:
         return D_inter
     
     def total(self):
-        return  self.inter()
+        return  self.inter()+self.intra()
     
     def trivial(self):
         """This function return SS for trivial model which is a [1,mu0,mu_offset,B] tensor """
