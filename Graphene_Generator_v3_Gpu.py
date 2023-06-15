@@ -26,8 +26,6 @@ class Graphene_Vec:
         self.B = B.reshape(1,1,1,B.shape[0],1,1).to(device)
         self.kx = torch.linspace(0,4*torch.pi/3,nx).reshape(1,1,1,1,nx,1).to(device)
         self.ky = torch.linspace(-2*torch.pi/sqrt(3),2*torch.pi/sqrt(3),ny).reshape(1,1,1,1,1,ny).to(device)
-        #self.kx = torch.linspace(2*torch.pi/3-0.1,2*torch.pi/3+0.1,nx).reshape(1,1,1,1,nx,1).to(device)
-        #self.ky = torch.linspace(2*torch.pi/(3*sqrt(3))-0.1,2*torch.pi/(3*sqrt(3))+0.1,ny).reshape(1,1,1,1,1,ny).to(device)
         self.Delta = Delta
         self.ny = ny
     def vec(self):
@@ -51,10 +49,10 @@ class Graphene_Vec:
         #derivative_ky =  self.t**2 * sqrt(3) * torch.sin(sqrt(3)/2*self.ky) *(torch.cos(3/2*self.kx) + 2*torch.cos(sqrt(3)/2*self.ky) )
 
         epsilon_p_kx = - torch.nan_to_num((self.t**2 * (3*torch.cos(sqrt(3)/2*self.ky)*torch.sin(3/2*self.kx) ))/self.epsilon_0,nan=0,posinf=0,neginf=0)
-        # epsilon_p_ky = - torch.nan_to_num(( self.t**2 * sqrt(3) * torch.sin(sqrt(3)/2*self.ky) *(torch.cos(3/2*self.kx) + 2*torch.cos(sqrt(3)/2*self.ky) ))/self.epsilon_0,nan=0,posinf=0,neginf=0)
+        epsilon_p_ky = - torch.nan_to_num(( self.t**2 * sqrt(3) * torch.sin(sqrt(3)/2*self.ky) *(torch.cos(3/2*self.kx) + 2*torch.cos(sqrt(3)/2*self.ky) ))/self.epsilon_0,nan=0,posinf=0,neginf=0)
         #epsilon_m_kx = - epsilon_p_kx
         #epsilon_m_ky = - epsilon_p_ky
-        return epsilon_p_kx, self.epsilon_0
+        return epsilon_p_kx,epsilon_p_ky, self.epsilon_0
     
     def derivative_state(self):
         """
@@ -62,9 +60,9 @@ class Graphene_Vec:
         Caveat: I omit i in the following equations
         """
         self.state_p_kx_m = torch.nan_to_num(-1/4 + self.t**2*(1.5 + 3*torch.cos(3/2*self.kx)*torch.cos(sqrt(3)/2*self.ky))/self.epsilon_0**2/2,nan=1/4,posinf=1/4,neginf=1/4)
-        #self.state_p_ky_m = torch.nan_to_num(self.t**2 * (sqrt(3)*torch.sin(3/2*self.kx)*torch.sin(sqrt(3)/2*self.ky))/self.epsilon_0**2/2,nan=0,posinf=0,neginf=0)
+        self.state_p_ky_m = torch.nan_to_num(self.t**2 * (sqrt(3)*torch.sin(3/2*self.kx)*torch.sin(sqrt(3)/2*self.ky))/self.epsilon_0**2/2,nan=0,posinf=0,neginf=0)
         
-        return self.state_p_kx_m 
+        return self.state_p_kx_m,self.state_p_ky_m 
 
 
 
@@ -95,29 +93,30 @@ class Graphene_SS:
 
         self.epsilon_p, self.epsilon_m = Params_vec.energy() 
 
-        self.epsilon_p_kx,self.epsilon_0 =  Params_vec.derivative_energy()
+        self.epsilon_p_kx,self.epsilon_p_ky,self.epsilon_0 =  Params_vec.derivative_energy()
 
-        self.state_p_kx_m =  Params_vec.derivative_state()
+        self.state_p_kx_m,self.state_p_ky_m =  Params_vec.derivative_state()
         
         self.ny = Params_vec.samplying()
     def intra(self):
         E_p = torch.sqrt(self.epsilon_p**2 + self.Delta**2)
         E_m = torch.sqrt(self.epsilon_m**2 + self.Delta**2)
-        D_intra_xx = (self.Delta**2 *( ( ( self.epsilon_p_kx**2/E_p**3 )*(Occupy_f(E_p,self.B) ) + ( self.epsilon_p_kx**2/E_m**3 )*(Occupy_f(E_m,self.B) )) ).mean(dim=(-2,-1))  /2 -self.Integrated_delta(E_p - abs(self.B),1) - self.Integrated_delta(E_m - abs(self.B),-1) ).cpu() # the last division of 2 is for the first brillouin zone
+        #D_intra_xx = (self.Delta**2 *( ( ( self.epsilon_p_kx**2/E_p**3 )*(Occupy_f(E_p,self.B) ) + ( self.epsilon_p_kx**2/E_m**3 )*(Occupy_f(E_m,self.B) )) ).mean(dim=(-2,-1))  /2 -self.Integrated_delta_xx(E_p - abs(self.B),1) - self.Integrated_delta_xx(E_m - abs(self.B),-1) ).cpu() # the last division of 2 is for the first brillouin zone
         
+        #torch.cuda.empty_cache()
+
+
+        D_intra_yy = (self.Delta**2 *( ( ( self.epsilon_p_ky**2/E_p**3 )*(Occupy_f(E_p,self.B) ) + ( self.epsilon_p_ky**2/E_m**3 )*(Occupy_f(E_m,self.B) )) ).mean(dim=(-2,-1))  /2 -self.Integrated_delta_yy(E_p - abs(self.B),1) - self.Integrated_delta_yy(E_m - abs(self.B),-1) ).cpu()
+
         torch.cuda.empty_cache()
-
-
-        #D_intra_yy = (self.Delta**2 *( ( self.epsilon_p_ky**2/self.E_p**3 )*(Occupy_f(self.E_p,self.B)-self.E_p*Lorentzian(self.E_p - abs(self.B)) ) + ( self.epsilon_m_ky**2/self.E_m**3 )*(Occupy_f(self.E_m,self.B)-self.E_m*Lorentzian(self.E_m - abs(self.B)) ) ).mean(dim=(-2,-1)) /2).cpu()
-
 
         #D_intra_xy = (self.Delta**2 *( ( self.epsilon_p_kx*self.epsilon_p_ky/self.E_p**3 )*(Occupy_f(self.E_p,self.B)-self.E_p*Lorentzian(self.E_p - abs(self.B)) ) + ( self.epsilon_m_kx*self.epsilon_m_ky/self.E_m**3 )*(Occupy_f(self.E_m,self.B)-self.E_m*Lorentzian(self.E_m - abs(self.B)) ) ).mean(dim=(-2,-1)) /2).cpu()
 
 
-        return D_intra_xx
+        return D_intra_yy
     
     def inter(self):
-        masker_mu_neq_0= abs(self.mu) < 0.001
+        masker_mu_neq_0= abs(self.mu) < 0.001 # since our sampling is not dense, we analytically compute inter part when mu<0.001
         
         E_p = torch.sqrt(self.epsilon_p**2 + self.Delta**2)
         E_m = torch.sqrt(self.epsilon_m**2 + self.Delta**2) 
@@ -142,7 +141,7 @@ class Graphene_SS:
         Integrate_delta = (masker_mu_neq_0*self.Delta**2/torch.pi/2*torch.nan_to_num((-3*u**2+z+1)**2/deno.sqrt()/(4*z+1)/abs(self.B),nan=0) ).mean(dim=(-1,-2))
         return Integrate_delta
 
-    def Integrated_delta(self,G,alpha):
+    def Integrated_delta_xx(self,G,alpha):
         """Integrate the part including delta function, by converting kx,ky to u,z space. The function output a [t,mu0,mu,B] tensor"""
         if G.min() >= 0: return 0
         # setting u, u=cos sqrt(3)/2ky
@@ -162,6 +161,33 @@ class Graphene_SS:
 
         return Integrate_delta
     
+    def Integrated_delta_yy(self,G,alpha):
+        """Integrate the part including delta function, by converting kx,ky to u,z space. The function output a [t,mu0,mu,B] tensor"""
+        if G.min() >= 0: return 0
+        # setting u, u=cos sqrt(3)/2ky
+        u = torch.cos(torch.linspace(-torch.pi,0,10000)).reshape(1,1,1,1,1,-1).to('cuda')
+        
+        # setting z_i = u(u+v); in [-1/4,2]
+        # z_plus = 1/4*( ((-alpha*mu + sqrt(B**2-Delta**2))/t)**2 - 1 )
+        z,deno = self.define_z(u,alpha,1)
+        
+        # extra term for u==0 (z==0), (t+alpha*mu)^2 == B^2 - Delta^2
+        extra_term = 0
+        if (0. in z) and type(extra_term)==int: 
+          extra_term = ( ( (self.t+alpha*self.mu)**2==self.B**2 )* torch.nan_to_num(3*self.Delta**2/(2*torch.pi**2)*self.t/(abs(self.B)*abs(self.t+alpha*self.mu)) ,posinf=0 )).sum(dim=(-1,-2))
+          print(extra_term.shape)
+        Integrate_delta = 3/(4*torch.pi)*(self.Delta**2*torch.nan_to_num(( self.t*(z/u+u)**2*(1-u**2) )/( deno.sqrt()*abs(self.B)*(4*z+1).sqrt()*abs(self.t*(4*z+1).sqrt() + alpha*self.mu) ), nan=0,posinf=0)).mean(dim=(-1,-2)) + extra_term
+
+        # z_minus = 1/4*( ((-alpha*mu - sqrt(B**2-Delta**2))/t)**2 - 1 )
+        z,deno = self.define_z(u,alpha,-1)
+        
+        if (0. in z) and type(extra_term)==int:
+          extra_term =  ( ( (self.t+alpha*self.mu)**2== self.B**2 )* torch.nan_to_num(3*self.Delta**2/(2*torch.pi**2)*self.t/(abs(self.B)*abs(self.t+alpha*self.mu)) ,posinf=0 )).sum(dim=(-1,-2))
+          print(extra_term.shape)
+        Integrate_delta += 3/(4*torch.pi)*(self.Delta**2*torch.nan_to_num(( self.t*(z/u+u)**2*(1-u**2) )/( deno.sqrt()*abs(self.B)*(4*z+1).sqrt()*abs(self.t*(4*z+1).sqrt() + alpha*self.mu) ), nan=0,posinf=0)).mean(dim=(-1,-2)) + extra_term
+
+        return Integrate_delta
+    
     def define_z(self,u,alpha,sign):
         # setting z_i, u(u+v); [-1/4,2]
         z = 1/4*( ((-alpha*self.mu + sign*torch.sqrt(self.B**2-self.Delta**2))/self.t)**2 - 1 ) # torch.sqrt(-1) = nan
@@ -176,7 +202,7 @@ class Graphene_SS:
         
 
     def total(self):
-        D_total_xx = self.intra() + self.inter()
+        D_total_xx = self.intra()
         return D_total_xx 
 ############################################################################# Lorentzian function
 ############################################################################
