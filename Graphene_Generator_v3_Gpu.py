@@ -215,7 +215,7 @@ class Graphene_SS:
         D_inter_xx,D_inter_yy = self.inter()
         D_intra_xx,D_intra_yy = self.intra()
         D_deter = (D_intra_xx+D_inter_xx)*(D_intra_yy+D_inter_yy)
-        return D_deter
+        return D_inter_xx
 ############################################################################# Lorentzian function
 ############################################################################
 def Lorentzian(x,eta=0.01):

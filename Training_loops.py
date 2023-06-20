@@ -64,13 +64,14 @@ def train_part(model,optimizer,train_loader,valid_loader, epochs = 1, learning_r
       for t, (x,y) in enumerate(train_loader):
         model.train()
         x = x.to(device='cuda',dtype=torch.float)
-        y = y.to(device='cuda',dtype=torch.float)
-        scores = model(x).reshape(-1)#for one classes
-        #scores = model(x)
-        L1_norm = 0
+        y = y.to(device='cuda',dtype=torch.int64)
+        #scores = model(x).reshape(-1)#for one output
+        #L1_norm = 0
         #for param in model.parameters():
         #  L1_norm += weight_decay*torch.sum(torch.abs(param))
-        loss = F.mse_loss(scores,y) + L1_norm
+        #loss = F.mse_loss(scores,y) + L1_norm
+        scores = model(x)
+        loss = F.cross_entropy(scores,y)
         optimizer.zero_grad() #zero out all of gradient
         loss.backward() # compute gradient of loss
         optimizer.step() #update parameters
@@ -123,11 +124,16 @@ def check_accuary(dataloader,model,verbose=False):
     
     num_correct = 0 
     num_samples = 0 
+    num_c0 = 0 # the number of trivial cases (when the preds are correct)
+    num_c1 = 0 # the number of trivial cases (when the preds are correct)
     num_0 = 0 # the number of trivial cases (when the preds are wrong)
     num_1 = 0 # the number of 1 cases (when the preds are wrong)
     num_2 = 0 # the number of 2 cases (when the preds are wrong)
-    num_l2 = 0 # the number of the cases bigger than two (when the preds are wrong)
-    num_n = 0 # the number of the cases negative (when the preds are wrong)
+    num_3 = 0 # the number of 3 cases (when the preds are wrong)
+    num_4 = 0 # the number of 4 cases (when the preds are wrong)
+    num_5 = 0 # the number of 5 cases (when the preds are wrong)
+    num_6 = 0 # the number of 6 cases (when the preds are wrong)
+    num_7 = 0 # the number of larger than 6 cases (when the preds are wrong)
     model.eval() # set model to evaluation model 
     if not verbose:
       with torch.no_grad():
@@ -135,7 +141,8 @@ def check_accuary(dataloader,model,verbose=False):
           x = x.to(device='cuda')
           y = y.to(device='cuda')
           scores = model(x)
-          preds = (torch.round(scores)).reshape(-1)
+          #preds = (torch.round(scores)).reshape(-1)
+          preds = torch.argmax(scores,dim=1)
           num_correct += (preds == y).sum()
           num_samples += preds.size(0)
         acc = float(num_correct) / num_samples 
@@ -147,25 +154,41 @@ def check_accuary(dataloader,model,verbose=False):
           x = x.to(device='cuda')
           y = y.to(device='cuda')
           scores = model(x)
-          preds = (torch.round(scores)).reshape(-1)
+          #preds = (torch.round(scores)).reshape(-1)
+          preds = torch.argmax(scores,dim=1)
           num_correct += (preds == y).sum()
           num_samples += preds.size(0)
+          num_c0 += ((preds ==y) * (preds == torch.zeros_like(y))).sum() 
+          num_c1 += ((preds ==y) * (preds == 2*torch.ones_like(y))).sum() 
           num_0 += ((preds !=y) * (preds == torch.zeros_like(y))).sum() 
           num_1 += ((preds !=y) * (preds == torch.ones_like(y))).sum() 
           num_2 += ((preds !=y) * (preds == 2*torch.ones_like(y))).sum() 
-          num_l2 += ((preds !=y) * (preds > 2*torch.ones_like(y))).sum() 
-          num_n += ((preds !=y) * (preds < torch.zeros_like(y))).sum() 
+          num_3 += ((preds !=y) * (preds == 3*torch.ones_like(y))).sum() 
+          num_4 += ((preds !=y) * (preds == 4*torch.ones_like(y))).sum() 
+          num_5 += ((preds !=y) * (preds == 5*torch.ones_like(y))).sum() 
+          num_6 += ((preds !=y) * (preds == 6*torch.ones_like(y))).sum() 
+          num_7 += ((preds !=y) * (preds > 6*torch.ones_like(y))).sum() 
         acc = float(num_correct) / num_samples 
+        acc_c0 = float(num_c0) / num_samples 
+        acc_c1 = float(num_c1) / num_samples 
         acc_0 = float(num_0) / num_samples 
         acc_1 = float(num_1) / num_samples 
         acc_2 = float(num_2) / num_samples 
-        acc_l2 = float(num_l2) / num_samples 
-        acc_n = float(num_n) / num_samples 
+        acc_3 = float(num_3) / num_samples 
+        acc_4 = float(num_4) / num_samples 
+        acc_5 = float(num_5) / num_samples 
+        acc_6 = float(num_6) / num_samples 
+        acc_7 = float(num_7) / num_samples 
         print(f'Got {num_correct:d} / {num_samples:d} correct {acc:.2f}')
+        print(f'Got {num_c0:d} / {num_samples:d} correct {acc_c0:.2f} preds as 0')
+        print(f'Got {num_c1:d} / {num_samples:d} correct {acc_c1:.2f} preds as 2')
         print(f'Got {num_0:d} / {num_samples:d} wrong {acc_0:.2f} preds as 0')
         print(f'Got {num_1:d} / {num_samples:d} wrong {acc_1:.2f} preds as 1')
         print(f'Got {num_2:d} / {num_samples:d} wrong {acc_2:.2f} preds as 2')
-        print(f'Got {num_l2:d} / {num_samples:d} wrong {acc_l2:.2f} preds as larger than 2')
-        print(f'Got {num_n:d} / {num_samples:d} wrong {acc_n:.2f} preds as smaller than 0')
+        print(f'Got {num_3:d} / {num_samples:d} wrong {acc_3:.2f} preds as 3')
+        print(f'Got {num_4:d} / {num_samples:d} wrong {acc_4:.2f} preds as 4')
+        print(f'Got {num_5:d} / {num_samples:d} wrong {acc_5:.2f} preds as 5')
+        print(f'Got {num_6:d} / {num_samples:d} wrong {acc_6:.2f} preds as 6')
+        print(f'Got {num_7:d} / {num_samples:d} wrong {acc_7:.2f} preds as larger than 6')
            
     return acc
