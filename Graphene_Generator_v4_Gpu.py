@@ -121,7 +121,7 @@ class Graphene_SS:
         E_p = torch.sqrt(self.epsilon_p**2 + self.Delta**2)
         E_m = torch.sqrt(self.epsilon_m**2 + self.Delta**2) 
         E_0 = torch.sqrt(self.epsilon_0**2 + self.Delta**2)
-        D_inter_xx = ((~masker_mu_neq_0*4*self.Delta**2 *self.state_p_kx_m**2* (  torch.nan_to_num( self.epsilon_0 / self.mu,nan=0 )*(- Occupy_f(E_p,self.B)/E_p + Occupy_f(E_m,self.B)/E_m )  )).mean(dim=(-2,-1)) /2
+        D_inter_xx = ((~masker_mu_neq_0*4*self.Delta**2 *self.state_p_kx_m**2* (  torch.nan_to_num( self.epsilon_0 / self.mu,nan=0 )*(- 1/E_p + 1/E_m )  )).mean(dim=(-2,-1)) /2 - self.inter_step()
                + (masker_mu_neq_0*4*self.Delta**2 *self.state_p_kx_m**2* 2*self.epsilon_0**2/E_0**3*Occupy_f(E_0,self.B)  ).mean(dim=(-2,-1)) /2
                - self.Integrated_inter_xx(masker_mu_neq_0)      ).cpu()
 
@@ -137,6 +137,27 @@ class Graphene_SS:
         #D_inter_xy = ((4*self.Delta**2 *self.state_p_kx_m*self.state_p_ky_m* ( torch.nan_to_num( ( self.epsilon_0 / self.mu )*(- Occupy_f(self.E_p,self.B)/self.E_p + Occupy_f(self.E_m,self.B)/self.E_m ),nan=0 ) + masker_mu_neq_0* 2*self.epsilon_p**2/self.E_p**3 *(Occupy_f(self.E_p,self.B) - self.E_p*Lorentzian(self.E_p - abs(self.B))) )).mean(dim=(-2,-1)) /2).cpu()
 
         return D_inter_xx,D_inter_yy
+    
+    def inter_step(self):
+        u = torch.cos(torch.linspace(-torch.pi,0,1500)).reshape(1,1,1,1,-1,1).to('cuda')
+        # upper boundary
+        z_u = 1/4*( ((-abs(self.mu) - torch.sqrt(self.B**2-self.Delta**2))/self.t)**2 - 1 ) # torch.sqrt(-1) = nan
+        # lower boundary
+        z_l = 1/4*( ((-abs(self.mu) + torch.sqrt(self.B**2-self.Delta**2))/self.t)**2 - 1 ) # torch.sqrt(-1) = nan
+        z_u[z_u>2] = float('nan')
+        z_l[z_l<=-1/4] = float('nan')
+        # samples
+        N = 1500
+        z = z_l+(z_u-z_l)/N*(torch.arange(0,N).reshape(1,1,1,1,1,N).to('cuda'))
+        # setting u^2-(z_i-u^2)^2 > 0
+        deno = u**2 - (z-u**2)**2
+        deno[deno<0] = float('nan') 
+        E_p = ((self.t*(4*z+1).sqrt()+abs(self.mu))**2 + self.Delta**2).sqrt()
+        E_m = ((self.t*(4*z+1).sqrt()-abs(self.mu))**2 + self.Delta**2).sqrt()
+        integral = torch.nan_to_num(self.Delta**2/8/torch.pi*self.t/abs(self.mu)*(-3*u**2+z+1)**2/deno.sqrt()/(4*z+1)**1.5*(1/E_p + 1/E_m)*2*u,nan=0,posinf=0,neginf=0).sum(dim=(-1,-2))/(~torch.isnan(deno)).sum()
+        return integral
+
+
     def Integrated_inter_xx(self,masker_mu_neq_0):
         """This function Integrate D inter for mu~0"""
         u = torch.cos(torch.pi*torch.linspace(-1,0,10000)).reshape(1,1,1,1,1,-1).to('cuda')
