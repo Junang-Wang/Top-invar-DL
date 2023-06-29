@@ -1,7 +1,7 @@
 import torch
 from math import *
 import numpy as np
-from torchquad import Boole, set_up_backend
+from torchquad import Simpson,Boole, set_up_backend
 
 
 ###########################################################################
@@ -25,6 +25,7 @@ class Graphene_Vec:
         """
         self.t = t.reshape(t.shape[0],1,1,1,1,1).to(device)
         self.mu = (mu_0.reshape(-1,1) + mu_offset.reshape(1,-1)).reshape(1,mu_0.shape[0],mu_offset.shape[0],1,1,1).to(device)
+        #self.mu[self.mu==0] = 0.01
         self.B = B.reshape(1,1,1,B.shape[0],1,1).to(device)
         self.kx = torch.linspace(0,4*torch.pi/3,nx).reshape(1,1,1,1,nx,1).to(device)
         self.ky = torch.linspace(-2*torch.pi/sqrt(3),2*torch.pi/sqrt(3),ny).reshape(1,1,1,1,1,ny).to(device)
@@ -93,68 +94,160 @@ class Graphene_SS:
 
         self.t, self.mu, self.B, self.kx, self.ky,self.Delta =  Params_vec.vec() 
 
-        self.epsilon_p, self.epsilon_m = Params_vec.energy() 
+        # self.epsilon_p, self.epsilon_m = Params_vec.energy() 
 
-        self.epsilon_p_kx,self.epsilon_p_ky,self.epsilon_0 =  Params_vec.derivative_energy()
+        # self.epsilon_p_kx,self.epsilon_p_ky,self.epsilon_0 =  Params_vec.derivative_energy()
 
-        self.state_p_kx_m,self.state_p_ky_m =  Params_vec.derivative_state()
+        # self.state_p_kx_m,self.state_p_ky_m =  Params_vec.derivative_state()
         
         self.ny = Params_vec.samplying()
 
         self.device = device
-    def intra(self):
-        E_p = torch.sqrt(self.epsilon_p**2 + self.Delta**2)
-        E_m = torch.sqrt(self.epsilon_m**2 + self.Delta**2)
-        D_intra_xx = (self.Delta**2 *( ( ( self.epsilon_p_kx**2/E_p**3 )*(Occupy_f(E_p,self.B) ) + ( self.epsilon_p_kx**2/E_m**3 )*(Occupy_f(E_m,self.B) )) ).mean(dim=(-2,-1))  /2 -self.Integrated_delta_xx(E_p - abs(self.B),1) - self.Integrated_delta_xx(E_m - abs(self.B),-1) ).cpu() # the last division of 2 is for the first brillouin zone
-        
-        torch.cuda.empty_cache()
-
-
-        D_intra_yy = (self.Delta**2 *( ( ( self.epsilon_p_ky**2/E_p**3 )*(Occupy_f(E_p,self.B) ) + ( self.epsilon_p_ky**2/E_m**3 )*(Occupy_f(E_m,self.B) )) ).mean(dim=(-2,-1))  /2 -self.Integrated_delta_yy(E_p - abs(self.B),1) - self.Integrated_delta_yy(E_m - abs(self.B),-1) ).cpu()
-
-        torch.cuda.empty_cache()
-
-        #D_intra_xy = (self.Delta**2 *( ( self.epsilon_p_kx*self.epsilon_p_ky/self.E_p**3 )*(Occupy_f(self.E_p,self.B)-self.E_p*Lorentzian(self.E_p - abs(self.B)) ) + ( self.epsilon_m_kx*self.epsilon_m_ky/self.E_m**3 )*(Occupy_f(self.E_m,self.B)-self.E_m*Lorentzian(self.E_m - abs(self.B)) ) ).mean(dim=(-2,-1)) /2).cpu()
-
-
-        return D_intra_xx,D_intra_yy
     
-    def inter(self):
-        masker_mu_neq_0= abs(self.mu) < 0.005 # since our sampling is not dense enough which leads to loss the contribution of delta function, we analytically compute inter part when mu<0.005
+    def intra_xx(self):
         
-        E_p = torch.sqrt(self.epsilon_p**2 + self.Delta**2)
-        E_m = torch.sqrt(self.epsilon_m**2 + self.Delta**2) 
-        E_0 = torch.sqrt(self.epsilon_0**2 + self.Delta**2)
-        D_inter_xx = ((self.inter_integral(self.inter_xx_integrand))
-               + (masker_mu_neq_0*self.inter_integral(self.inter_xx_integrand_0) ).mean(dim=(-2,-1)) 
-               - self.Integrated_inter_xx(masker_mu_neq_0)      ).cpu()
-        
-        torch.cuda.empty_cache()
+      D_intra_xx = ((self.integral(self.intra_xx_integrand))
+             - (self.integral_delta(self.intra_xx_integrand_delta) )     ).cpu()
+      torch.cuda.empty_cache()
 
-        # D_inter_yy = ((~masker_mu_neq_0*4*self.Delta**2 *self.state_p_ky_m**2* (  torch.nan_to_num( self.epsilon_0 / self.mu,nan=0 )*(- Occupy_f(E_p,self.B)/E_p + Occupy_f(E_m,self.B)/E_m )  )).mean(dim=(-2,-1)) /2
-        #        + (masker_mu_neq_0*4*self.Delta**2 *self.state_p_ky_m**2* 2*self.epsilon_0**2/E_0**3*Occupy_f(E_0,self.B)  ).mean(dim=(-2,-1)) /2
-        #        - self.Integrated_inter_yy(masker_mu_neq_0)      ).cpu()
-        
-        # torch.cuda.empty_cache()
+      return D_intra_xx
 
+    def intra_yy(self):
 
-        #D_inter_xy = ((4*self.Delta**2 *self.state_p_kx_m*self.state_p_ky_m* ( torch.nan_to_num( ( self.epsilon_0 / self.mu )*(- Occupy_f(self.E_p,self.B)/self.E_p + Occupy_f(self.E_m,self.B)/self.E_m ),nan=0 ) + masker_mu_neq_0* 2*self.epsilon_p**2/self.E_p**3 *(Occupy_f(self.E_p,self.B) - self.E_p*Lorentzian(self.E_p - abs(self.B))) )).mean(dim=(-2,-1)) /2).cpu()
+      D_intra_yy = ((self.integral(self.intra_yy_integrand))
+            - (self.integral_delta(self.intra_yy_integrand_delta) )     ).cpu()
+      torch.cuda.empty_cache()
+      return D_intra_yy
+    
+    def inter_xx(self):
+      masker_mu_neq_0= (abs(self.mu) ==0).squeeze(dim=(-1,-2))
+      #masker_mu_neq_0= (abs(self.mu) <=0.005*self.t).squeeze(dim=(-1,-2)) # since our sampling is not dense enough which leads to loss the contribution of delta function, we analytically compute inter part when mu<0.005
+      D_inter_xx = ((self.integral(self.inter_xx_integrand))
+             + (masker_mu_neq_0*self.integral(self.inter_xx_integrand_0) ) 
+             - (2*masker_mu_neq_0*self.integral_delta(self.inter_xx_integrand_0_delta) )      ).cpu()
+      torch.cuda.empty_cache()
 
-        return D_inter_xx
-    def inter_integral(self,integrand):
+      return D_inter_xx
+    def inter_yy(self):
+      masker_mu_neq_0= (abs(self.mu) ==0).squeeze(dim=(-1,-2))
+      D_inter_yy = ((self.integral(self.inter_yy_integrand))
+              + (masker_mu_neq_0*self.integral(self.inter_yy_integrand_0) ) 
+              - (2*masker_mu_neq_0*self.integral_delta(self.inter_yy_integrand_0_delta) )      ).cpu()
+      
+      torch.cuda.empty_cache()
+
+      return D_inter_yy
+    def integral(self,integrand):
         if self.device == 'cuda':
             set_up_backend('torch',data_type='float32')
             
-        bo = Boole() # using quadratic interpolation Boole's rule
+        bo = Boole() # using 4th interpolation Boole's rule
         integral_value = bo.integrate(
             integrand,
             dim = 2,
             N = 2001*2001,
-            integration_domain = [[0,2*torch.pi],[-torch.pi,torch.pi]],
+            integration_domain = [[0,torch.pi],[0,torch.pi]],
+            #integration_domain = [[torch.pi-0.1,torch.pi+0.1],[torch.pi/3-0.1,torch.pi/3+0.1]],
             backend = 'torch',
         )
         return integral_value
+    
+    def integral_delta(self,integrand):
+        if self.device == 'cuda':
+            set_up_backend('torch',data_type='float32')
+            
+        bo = Boole() # using 4th interpolation Boole's rule
+        integral_value = bo.integrate(
+            integrand,
+            dim = 1,
+            N = 10001,
+            #integration_domain = [[-torch.pi,torch.pi]],
+            integration_domain = [[torch.pi/(3)-0.1,torch.pi/(3)+0.1]],
+            backend = 'torch',
+        )
+        # print(integral_value)
+        return integral_value
+    
+    def intra_xx_integrand(self,x):
+        """Integrant intra_xx by using torchquad integrate"""
+        u = torch.cos(x[:,1]).reshape(-1,1,1,1,1)
+        v = torch.cos(x[:,0]).reshape(-1,1,1,1,1)
+        n = torch.sin(x[:,0]).reshape(-1,1,1,1,1)
+        t = self.t.unsqueeze(0).squeeze(-1,-2)
+        mu = self.mu.unsqueeze(0).squeeze(-1,-2)
+        B = self.B.unsqueeze(0).squeeze(-1,-2)
+        E_p = (torch.sqrt((t*torch.sqrt(4*(u*(u+v))+1)+1*mu)**2+self.Delta**2))
+        E_m = (torch.sqrt((t*torch.sqrt(4*(u*(u+v))+1)+-1*mu)**2+self.Delta**2))
 
+        I = torch.nan_to_num(t**2*(3*u*n)**2/(abs(4*(u*(u+v))+1))*( Occupy_f(E_p,B)/E_p**3 +  Occupy_f(E_m,B)/E_m**3 )/np.pi**2/8,nan=0,posinf=0)
+        return I
+    def intra_xx_integrand_delta(self,x):
+        """Integrate intra_xx, delta function part """
+        t = self.t.unsqueeze(0).squeeze(-1,-2)
+        B = self.B.unsqueeze(0).squeeze(-1,-2)
+        mu = self.mu.unsqueeze(0).squeeze(-1,-2)
+        # setting z_i, u(u+v); [-1/4,2]
+        z_pp = (1/4*( ((-mu+ torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=7) # torch.sqrt(-1) = nan
+        z_pp[z_pp>2] = float('nan')
+        z_pp[z_pp<=-1/4] = float('nan')
+        z_pm = (1/4*( ((-mu- torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=7) # torch.sqrt(-1) = nan
+        z_pm[z_pm>2] = float('nan')
+        z_pm[z_pm<=-1/4] = float('nan')
+        z_mp = (1/4*( ((mu+ torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=7) # torch.sqrt(-1) = nan
+        z_mp[z_mp>2] = float('nan')
+        z_mp[z_mp<=-1/4] = float('nan')
+        z_mm = (1/4*( ((mu- torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=7) # torch.sqrt(-1) = nan
+        z_mm[z_mm>2] = float('nan')
+        z_mm[z_mm<=-1/4] = float('nan')
+        #----------------------------------------------
+        u = torch.cos(x[:,0]).reshape(-1,1,1,1,1).round(decimals=7)
+        A1 = torch.nan_to_num((u**2-(z_pp-u**2)**2).sqrt()/(4*z_pp+1).sqrt(),nan=0,posinf=0)
+        A2 = torch.nan_to_num((u**2-(z_pm-u**2)**2).sqrt()/(4*z_pm+1).sqrt(),nan=0,posinf=0)
+        A3 = torch.nan_to_num((u**2-(z_mp-u**2)**2).sqrt()/(4*z_mp+1).sqrt(),nan=0,posinf=0)
+        A4 = torch.nan_to_num((u**2-(z_mm-u**2)**2).sqrt()/(4*z_mm+1).sqrt(),nan=0,posinf=0)
+        I = self.Delta**2*torch.nan_to_num(t*( A1+A2+A3+A4)/(B**2-self.Delta**2).sqrt()/abs(B)/np.pi**2*9/4,nan=0,posinf=0)
+        return I
+    
+    def intra_yy_integrand(self,x):
+        """Integrant intra_yy by using torchquad integrate"""
+        u = torch.cos(x[:,1]).reshape(-1,1,1,1,1)
+        v = torch.cos(x[:,0]).reshape(-1,1,1,1,1)
+        m = torch.sin(x[:,1]).reshape(-1,1,1,1,1)
+        t = self.t.unsqueeze(0).squeeze(-1,-2)
+        mu = self.mu.unsqueeze(0).squeeze(-1,-2)
+        B = self.B.unsqueeze(0).squeeze(-1,-2)
+        E_p = (torch.sqrt((t*torch.sqrt(4*(u*(u+v))+1)+1*mu)**2+self.Delta**2))
+        E_m = (torch.sqrt((t*torch.sqrt(4*(u*(u+v))+1)+-1*mu)**2+self.Delta**2))
+
+        I = torch.nan_to_num(t**2*(sqrt(3)*m*(2*u+v))**2/(abs(4*(u*(u+v))+1))*( Occupy_f(E_p,B)/E_p**3 +  Occupy_f(E_m,B)/E_m**3 )/np.pi**2/8,nan=0,posinf=0)
+        return I
+    def intra_yy_integrand_delta(self,x):
+        """Integrate intra_yy, delta function part """
+        t = self.t.unsqueeze(0).squeeze(-1,-2)
+        B = self.B.unsqueeze(0).squeeze(-1,-2)
+        mu = self.mu.unsqueeze(0).squeeze(-1,-2)
+        # setting z_i, u(u+v); [-1/4,2]
+        z_pp = (1/4*( ((-mu+ torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=5) # torch.sqrt(-1) = nan
+        z_pp[z_pp>2] = float('nan')
+        z_pp[z_pp<=-1/4] = float('nan')
+        z_pm = (1/4*( ((-mu- torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=5) # torch.sqrt(-1) = nan
+        z_pm[z_pm>2] = float('nan')
+        z_pm[z_pm<=-1/4] = float('nan')
+        z_mp = (1/4*( ((mu+ torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=5) # torch.sqrt(-1) = nan
+        z_mp[z_mp>2] = float('nan')
+        z_mp[z_mp<=-1/4] = float('nan')
+        z_mm = (1/4*( ((mu- torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=5) # torch.sqrt(-1) = nan
+        z_mm[z_mm>2] = float('nan')
+        z_mm[z_mm<=-1/4] = float('nan')
+        #----------------------------------------------
+        u = torch.cos(x[:,0]).reshape(-1,1,1,1,1).round(decimals=5)
+        ut = torch.nan_to_num(torch.tan(x[:,0]),nan=0,posinf=0).reshape(-1,1,1,1,1).round(decimals=5)
+        A1 = torch.nan_to_num((z_pp+u**2)**2/(u**2-(z_pp-u**2)**2).sqrt()/(4*z_pp+1).sqrt(),nan=0,posinf=0)
+        A2 = torch.nan_to_num((z_pm+u**2)**2/(u**2-(z_pm-u**2)**2).sqrt()/(4*z_pm+1).sqrt(),nan=0,posinf=0)
+        A3 = torch.nan_to_num((z_mp+u**2)**2/(u**2-(z_mp-u**2)**2).sqrt()/(4*z_mp+1).sqrt(),nan=0,posinf=0)
+        A4 = torch.nan_to_num((z_mm+u**2)**2/(u**2-(z_mm-u**2)**2).sqrt()/(4*z_mm+1).sqrt(),nan=0,posinf=0)
+        I = self.Delta**2*torch.nan_to_num(t*ut**2*( A1+A2+A3+A4)/(B**2-self.Delta**2).sqrt()/abs(B)/np.pi**2*3/4,nan=0,posinf=0)
+        return I
     def inter_xx_integrand(self,x):
         """Integrant inter_xx by using torchquad integrate"""
         u = torch.cos(x[:,1]).reshape(-1,1,1,1,1)
@@ -165,100 +258,82 @@ class Graphene_SS:
         E_p = (torch.sqrt((t*torch.sqrt(4*(u*(u+v))+1)+1*mu)**2+self.Delta**2))
         E_m = (torch.sqrt((t*torch.sqrt(4*(u*(u+v))+1)+-1*mu)**2+self.Delta**2))
 
-        I = torch.nan_to_num(t*(-2*u**2+u*v+1)**2/(4*(u*(u+v))+1)**1.5*( -Occupy_f(E_p,B)/E_p +  Occupy_f(E_m,B)/E_m )/2/np.pi**2/mu/4,nan=0,posinf=0)
+        I = torch.nan_to_num(t*(-2*u**2+u*v+1)**2/(abs(4*(u*(u+v))+1))**1.5*( -Occupy_f(E_p,B)/E_p +  Occupy_f(E_m,B)/E_m )/2/np.pi**2/mu/4,nan=0,posinf=0)
         return I
     
     def inter_xx_integrand_0(self,x):
-        """Integrant inter_xx by using torchquad integrate mu~0"""
+        """Integrate inter_xx by using torchquad integrate mu~0"""
         u = torch.cos(x[:,1]).reshape(-1,1,1,1,1)
         v = torch.cos(x[:,0]).reshape(-1,1,1,1,1)
         t = self.t.unsqueeze(0).squeeze(-1,-2)
         B = self.B.unsqueeze(0).squeeze(-1,-2)
         E_0 = (torch.sqrt((t*torch.sqrt(4*(u*(u+v))+1))**2+self.Delta**2))
 
-        I = torch.nan_to_num(t**2*(-2*u**2+u*v+1)**2/(4*(u*(u+v))+1)*( Occupy_f(E_0,B)/E_0**3)/np.pi**2/4,nan=0,posinf=0)
+        I = t**2*torch.nan_to_num((-2*u**2+u*v+1)**2/(4*(u*(u+v))+1),nan=0,posinf=0)*( Occupy_f(E_0,B)/E_0**3)/np.pi**2/4
         return I
 
-
-    def Integrated_inter_xx(self,masker_mu_neq_0):
-        """This function Integrate D inter for mu~0"""
-        u = torch.cos(torch.pi*torch.linspace(-1,0,10000)).reshape(1,1,1,1,1,-1).to('cuda')
-        z, deno = self.define_z(u,0,1)
-        Integrate_delta = (masker_mu_neq_0*self.Delta**2/torch.pi/2*torch.nan_to_num((-3*u**2+z+1)**2/deno.sqrt()/(4*z+1)/abs(self.B),nan=0,posinf=0) ).mean(dim=(-1,-2))
-        return Integrate_delta
-
-    def Integrated_inter_yy(self,masker_mu_neq_0):
-        """This function Integrate D inter for mu~0"""
-        u = torch.cos(torch.pi*torch.linspace(-1,0,10000)).reshape(1,1,1,1,1,-1).to('cuda')
-        z, deno = self.define_z(u,0,1)
-        Integrate_delta = (masker_mu_neq_0*3*self.Delta**2/torch.pi/2*torch.nan_to_num((1-u**2)*deno.sqrt()/u**2/(4*z+1)/abs(self.B),nan=0,posinf=0) ).mean(dim=(-1,-2))
-        return Integrate_delta
-    
-    def Integrated_delta_xx(self,G,alpha):
-        """Integrate the part including delta function, by converting kx,ky to u,z space. The function output a [t,mu0,mu,B] tensor"""
-        if G.min() >= 0: return 0
-        # setting u, u=cos sqrt(3)/2ky
-        u = torch.cos(torch.pi*torch.linspace(-1,0,10000)).reshape(1,1,1,1,1,-1).to('cuda')
-        
-        # setting z_i = u(u+v); in [-1/4,2]
-        # z_plus = 1/4*( ((-alpha*mu + sqrt(B**2-Delta**2))/t)**2 - 1 )
-        z,deno = self.define_z(u,alpha,1)
-
-        Integrate_delta = 9/(4*torch.pi)*(self.Delta**2*torch.nan_to_num(( self.t*deno.sqrt() )/( abs(self.B)*(4*z+1).sqrt()*abs(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=(-1,-2))
-
-        # z_minus = 1/4*( ((-alpha*mu - sqrt(B**2-Delta**2))/t)**2 - 1 )
-        z,deno = self.define_z(u,alpha,-1)
-        
-        Integrate_delta += 9/(4*torch.pi)*(self.Delta**2*torch.nan_to_num(( self.t*deno.sqrt() )/( abs(self.B)*(4*z+1).sqrt()*abs(self.t*(4*z+1).sqrt() + alpha*self.mu) ),nan=0)).mean(dim=(-1,-2))
-
-
-        return Integrate_delta
-    
-    def Integrated_delta_yy(self,G,alpha):
-        """Integrate the part including delta function, by converting kx,ky to u,z space. The function output a [t,mu0,mu,B] tensor"""
-        if G.min() >= 0: return 0
-        # setting u, u=cos sqrt(3)/2ky
-        u = torch.cos(torch.linspace(-torch.pi,0,10000)).reshape(1,1,1,1,1,-1).to('cuda')
-        
-        # setting z_i = u(u+v); in [-1/4,2]
-        # z_plus = 1/4*( ((-alpha*mu + sqrt(B**2-Delta**2))/t)**2 - 1 )
-        z,deno = self.define_z(u,alpha,1)
-        
-        # extra term for u==0 (z==0), (t+alpha*mu)^2 == B^2 - Delta^2
-        extra_term = 0
-        if (0. in z) and type(extra_term)==int: 
-          extra_term = ( ( (self.t+alpha*self.mu)**2==self.B**2 )* torch.nan_to_num(3*self.Delta**2/(2*torch.pi**2)*self.t/(abs(self.B)*abs(self.t+alpha*self.mu)) ,posinf=0 )).sum(dim=(-1,-2))
-          print(extra_term.shape)
-        Integrate_delta = 3/(4*torch.pi)*(self.Delta**2*torch.nan_to_num(( self.t*(z/u+u)**2*(1-u**2) )/( deno.sqrt()*abs(self.B)*(4*z+1).sqrt()*abs(self.t*(4*z+1).sqrt() + alpha*self.mu) ), nan=0,posinf=0)).mean(dim=(-1,-2)) + extra_term
-
-        # z_minus = 1/4*( ((-alpha*mu - sqrt(B**2-Delta**2))/t)**2 - 1 )
-        z,deno = self.define_z(u,alpha,-1)
-        
-        if (0. in z) and type(extra_term)==int:
-          extra_term =  ( ( (self.t+alpha*self.mu)**2== self.B**2 )* torch.nan_to_num(3*self.Delta**2/(2*torch.pi**2)*self.t/(abs(self.B)*abs(self.t+alpha*self.mu)) ,posinf=0 )).sum(dim=(-1,-2))
-          print(extra_term.shape)
-        Integrate_delta += 3/(4*torch.pi)*(self.Delta**2*torch.nan_to_num(( self.t*(z/u+u)**2*(1-u**2) )/( deno.sqrt()*abs(self.B)*(4*z+1).sqrt()*abs(self.t*(4*z+1).sqrt() + alpha*self.mu) ), nan=0,posinf=0)).mean(dim=(-1,-2)) + extra_term
-
-        return Integrate_delta
-    
-    def define_z(self,u,alpha,sign):
+    def inter_xx_integrand_0_delta(self,x):
+        """Integrate inter_xx mu~0, delta function part """
+        t = self.t.unsqueeze(0).squeeze(-1,-2)
+        B = self.B.unsqueeze(0).squeeze(-1,-2)
         # setting z_i, u(u+v); [-1/4,2]
-        z = 1/4*( ((-alpha*self.mu + sign*torch.sqrt(self.B**2-self.Delta**2))/self.t)**2 - 1 ) # torch.sqrt(-1) = nan
-        # setting |B| > Delta, -alpha*mu(+-)sqrt(B^2-Delta^2) > 0
-        #z[(-alpha*self.mu + sign*torch.sqrt(self.B**2-self.Delta**2))<0] = float('nan')
+        z = (1/4*( (( torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=5) # torch.sqrt(-1) = nan
         z[z>2] = float('nan')
         z[z<=-1/4] = float('nan')
-        # setting u^2-(z_i-u^2)^2 > 0
-        deno = u**2 - (z-u**2)**2
-        deno[deno<0] = float('nan') 
-        return z,deno
-        
+        u = torch.cos(x[:,0]).reshape(-1,1,1,1,1).round(decimals=5)
+        #print(torch.nan_to_num(z,nan=0))
+        #print(I.shape)
+        I = self.Delta**2*torch.nan_to_num(torch.nan_to_num((-3*u**2+z+1)**2,nan=0)/(4*z+1)/abs(B)/(u**2-(z-u**2)**2).sqrt()/np.pi**2/2,nan=0,posinf=0)
+        return I
+    
+    def inter_yy_integrand(self,x):
+        """Integrant inter_xx by using torchquad integrate"""
+        u = torch.cos(x[:,1]).reshape(-1,1,1,1,1)
+        v = torch.cos(x[:,0]).reshape(-1,1,1,1,1)
+        m = torch.sin(x[:,1]).reshape(-1,1,1,1,1)
+        n = torch.sin(x[:,0]).reshape(-1,1,1,1,1)
+        t = self.t.unsqueeze(0).squeeze(-1,-2)
+        mu = self.mu.unsqueeze(0).squeeze(-1,-2)
+        B = self.B.unsqueeze(0).squeeze(-1,-2)
+        E_p = (torch.sqrt((t*torch.sqrt(4*(u*(u+v))+1)+1*mu)**2+self.Delta**2))
+        E_m = (torch.sqrt((t*torch.sqrt(4*(u*(u+v))+1)+-1*mu)**2+self.Delta**2))
+
+        I = torch.nan_to_num(t*(sqrt(3)*m*n)**2/(abs(4*(u*(u+v))+1))**1.5*( -Occupy_f(E_p,B)/E_p +  Occupy_f(E_m,B)/E_m )/2/np.pi**2/mu/4,nan=0,posinf=0)
+        return I 
+    
+    def inter_yy_integrand_0(self,x):
+        """Integrate inter_xx by using torchquad integrate mu~0"""
+        u = torch.cos(x[:,1]).reshape(-1,1,1,1,1)
+        v = torch.cos(x[:,0]).reshape(-1,1,1,1,1)
+        m = torch.sin(x[:,1]).reshape(-1,1,1,1,1)
+        n = torch.sin(x[:,0]).reshape(-1,1,1,1,1)
+        t = self.t.unsqueeze(0).squeeze(-1,-2)
+        B = self.B.unsqueeze(0).squeeze(-1,-2)
+        E_0 = (torch.sqrt((t*torch.sqrt(4*(u*(u+v))+1))**2+self.Delta**2))
+
+        I = t**2*torch.nan_to_num((sqrt(3)*m*n)**2/(4*(u*(u+v))+1),nan=0,posinf=0)*( Occupy_f(E_0,B)/E_0**3)/np.pi**2/4
+        return I
+
+    def inter_yy_integrand_0_delta(self,x):
+        """Integrate inter_xx mu~0, delta function part """
+        t = self.t.unsqueeze(0).squeeze(-1,-2)
+        B = self.B.unsqueeze(0).squeeze(-1,-2)
+        # setting z_i, u(u+v); [-1/4,2]
+        z = (1/4*( (( torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=5) # torch.sqrt(-1) = nan
+        z[z>2] = float('nan')
+        z[z<=-1/4] = float('nan')
+        u = torch.cos(x[:,0]).reshape(-1,1,1,1,1).round(decimals=5)
+        m = torch.tan(x[:,0]).reshape(-1,1,1,1,1).round(decimals=5)
+        #print(torch.nan_to_num(z,nan=0))
+        #print(I.shape)
+        I = 3*self.Delta**2*torch.nan_to_num(torch.nan_to_num(m**2,nan=0)/(4*z+1)/abs(B)*(u**2-(z-u**2)**2).sqrt()/np.pi**2/2,nan=0,posinf=0)
+        return I
 
     def total(self):
-        D_inter_xx = self.inter()
-        #D_intra_xx,D_intra_yy = self.intra()
-        #D_deter = (D_intra_xx+D_inter_xx)*(D_intra_yy+D_inter_yy)
-        return D_inter_xx
+        #D_inter_xx = self.inter()
+        # D_intra_xx,D_intra_yy = self.intra()
+        D_deter = (self.inter_xx()+self.intra_xx())*(self.inter_yy()+self.intra_yy())
+        return D_deter
 ############################################################################# Lorentzian function
 ############################################################################
 def Lorentzian(x,eta=0.01):
