@@ -25,7 +25,7 @@ class Analytic_D:
         return D_inter
     
     def total(self):
-        return  self.inter()+self.intra()
+        return  (self.intra()+self.inter())**2
     
     def trivial(self):
         """This function return SS for trivial model which is a [1,mu0,mu_offset,B] tensor """
@@ -33,7 +33,7 @@ class Analytic_D:
         D_intra = n*(self.mu**2+self.Delta**2).sqrt()/(2*torch.pi)* ( self.step_f( self.Delta-abs(self.B) ) 
                                                                           + torch.nan_to_num(self.step_f( abs(self.B)- self.Delta)*self.step_f( (self.mu**2+self.Delta**2).sqrt() - abs(self.B) )
                                                                            *(1 - abs(self.mu)*abs(self.B) /(self.mu**2+self.Delta**2).sqrt() / (self.B**2-self.Delta**2).sqrt()  ),nan=0 ) )
-        return D_intra
+        return D_intra**2
 
 
     def step_f(self,x):

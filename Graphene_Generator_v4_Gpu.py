@@ -1,7 +1,7 @@
 import torch
 from math import *
 import numpy as np
-from torchquad import Simpson,Boole, set_up_backend
+from torchquad import Simpson,Boole, set_up_backend, MonteCarlo
 
 
 ###########################################################################
@@ -106,7 +106,7 @@ class Graphene_SS:
     
     def intra_xx(self):
         
-      D_intra_xx = ((self.integral(self.intra_xx_integrand))
+      D_intra_xx = (4*(self.integral(self.intra_xx_integrand))
              - (self.integral_delta(self.intra_xx_integrand_delta) )     ).cpu()
       torch.cuda.empty_cache()
 
@@ -114,7 +114,7 @@ class Graphene_SS:
 
     def intra_yy(self):
 
-      D_intra_yy = ((self.integral(self.intra_yy_integrand))
+      D_intra_yy = (4*(self.integral(self.intra_yy_integrand))
             - (self.integral_delta(self.intra_yy_integrand_delta) )     ).cpu()
       torch.cuda.empty_cache()
       return D_intra_yy
@@ -122,16 +122,16 @@ class Graphene_SS:
     def inter_xx(self):
       masker_mu_neq_0= (abs(self.mu) ==0).squeeze(dim=(-1,-2))
       #masker_mu_neq_0= (abs(self.mu) <=0.005*self.t).squeeze(dim=(-1,-2)) # since our sampling is not dense enough which leads to loss the contribution of delta function, we analytically compute inter part when mu<0.005
-      D_inter_xx = ((self.integral(self.inter_xx_integrand))
-             + (masker_mu_neq_0*self.integral(self.inter_xx_integrand_0) ) 
+      D_inter_xx = (4*(self.integral(self.inter_xx_integrand))
+             + 4*(masker_mu_neq_0*self.integral(self.inter_xx_integrand_0) ) 
              - (2*masker_mu_neq_0*self.integral_delta(self.inter_xx_integrand_0_delta) )      ).cpu()
       torch.cuda.empty_cache()
 
       return D_inter_xx
     def inter_yy(self):
       masker_mu_neq_0= (abs(self.mu) ==0).squeeze(dim=(-1,-2))
-      D_inter_yy = ((self.integral(self.inter_yy_integrand))
-              + (masker_mu_neq_0*self.integral(self.inter_yy_integrand_0) ) 
+      D_inter_yy = (4*(self.integral(self.inter_yy_integrand))
+              + (4*masker_mu_neq_0*self.integral(self.inter_yy_integrand_0) ) 
               - (2*masker_mu_neq_0*self.integral_delta(self.inter_yy_integrand_0_delta) )      ).cpu()
       
       torch.cuda.empty_cache()
@@ -140,14 +140,15 @@ class Graphene_SS:
     def integral(self,integrand):
         if self.device == 'cuda':
             set_up_backend('torch',data_type='float32')
-            
+        # bo = MonteCarlo()    
         bo = Boole() # using 4th interpolation Boole's rule
         integral_value = bo.integrate(
             integrand,
             dim = 2,
-            N = 2001*2001,
+            N = 3101*3101,
             integration_domain = [[0,torch.pi],[0,torch.pi]],
-            #integration_domain = [[torch.pi-0.1,torch.pi+0.1],[torch.pi/3-0.1,torch.pi/3+0.1]],
+            # integration_domain = [[0,2*torch.pi],[-torch.pi,torch.pi]],
+            # integration_domain = [[torch.pi-0.2,torch.pi+0.2],[torch.pi/3-0.2,torch.pi/3+0.2]],
             backend = 'torch',
         )
         return integral_value
@@ -161,7 +162,7 @@ class Graphene_SS:
             integrand,
             dim = 1,
             N = 10001,
-            #integration_domain = [[-torch.pi,torch.pi]],
+            # integration_domain = [[0,torch.pi]],
             integration_domain = [[torch.pi/(3)-0.1,torch.pi/(3)+0.1]],
             backend = 'torch',
         )
@@ -227,21 +228,21 @@ class Graphene_SS:
         B = self.B.unsqueeze(0).squeeze(-1,-2)
         mu = self.mu.unsqueeze(0).squeeze(-1,-2)
         # setting z_i, u(u+v); [-1/4,2]
-        z_pp = (1/4*( ((-mu+ torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=5) # torch.sqrt(-1) = nan
+        z_pp = (1/4*( ((-mu+ torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=7) # torch.sqrt(-1) = nan
         z_pp[z_pp>2] = float('nan')
         z_pp[z_pp<=-1/4] = float('nan')
-        z_pm = (1/4*( ((-mu- torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=5) # torch.sqrt(-1) = nan
+        z_pm = (1/4*( ((-mu- torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=7) # torch.sqrt(-1) = nan
         z_pm[z_pm>2] = float('nan')
         z_pm[z_pm<=-1/4] = float('nan')
-        z_mp = (1/4*( ((mu+ torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=5) # torch.sqrt(-1) = nan
+        z_mp = (1/4*( ((mu+ torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=7) # torch.sqrt(-1) = nan
         z_mp[z_mp>2] = float('nan')
         z_mp[z_mp<=-1/4] = float('nan')
-        z_mm = (1/4*( ((mu- torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=5) # torch.sqrt(-1) = nan
+        z_mm = (1/4*( ((mu- torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=7) # torch.sqrt(-1) = nan
         z_mm[z_mm>2] = float('nan')
         z_mm[z_mm<=-1/4] = float('nan')
         #----------------------------------------------
-        u = torch.cos(x[:,0]).reshape(-1,1,1,1,1).round(decimals=5)
-        ut = torch.nan_to_num(torch.tan(x[:,0]),nan=0,posinf=0).reshape(-1,1,1,1,1).round(decimals=5)
+        u = torch.cos(x[:,0]).reshape(-1,1,1,1,1).round(decimals=7)
+        ut = torch.nan_to_num(torch.tan(x[:,0]),nan=0,posinf=0).reshape(-1,1,1,1,1).round(decimals=7)
         A1 = torch.nan_to_num((z_pp+u**2)**2/(u**2-(z_pp-u**2)**2).sqrt()/(4*z_pp+1).sqrt(),nan=0,posinf=0)
         A2 = torch.nan_to_num((z_pm+u**2)**2/(u**2-(z_pm-u**2)**2).sqrt()/(4*z_pm+1).sqrt(),nan=0,posinf=0)
         A3 = torch.nan_to_num((z_mp+u**2)**2/(u**2-(z_mp-u**2)**2).sqrt()/(4*z_mp+1).sqrt(),nan=0,posinf=0)
@@ -277,10 +278,10 @@ class Graphene_SS:
         t = self.t.unsqueeze(0).squeeze(-1,-2)
         B = self.B.unsqueeze(0).squeeze(-1,-2)
         # setting z_i, u(u+v); [-1/4,2]
-        z = (1/4*( (( torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=5) # torch.sqrt(-1) = nan
+        z = (1/4*( (( torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=7) # torch.sqrt(-1) = nan
         z[z>2] = float('nan')
         z[z<=-1/4] = float('nan')
-        u = torch.cos(x[:,0]).reshape(-1,1,1,1,1).round(decimals=5)
+        u = torch.cos(x[:,0]).reshape(-1,1,1,1,1).round(decimals=7)
         #print(torch.nan_to_num(z,nan=0))
         #print(I.shape)
         I = self.Delta**2*torch.nan_to_num(torch.nan_to_num((-3*u**2+z+1)**2,nan=0)/(4*z+1)/abs(B)/(u**2-(z-u**2)**2).sqrt()/np.pi**2/2,nan=0,posinf=0)
@@ -319,11 +320,11 @@ class Graphene_SS:
         t = self.t.unsqueeze(0).squeeze(-1,-2)
         B = self.B.unsqueeze(0).squeeze(-1,-2)
         # setting z_i, u(u+v); [-1/4,2]
-        z = (1/4*( (( torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=5) # torch.sqrt(-1) = nan
+        z = (1/4*( (( torch.sqrt(B**2-self.Delta**2))/t)**2 - 1 )).round(decimals=7) # torch.sqrt(-1) = nan
         z[z>2] = float('nan')
         z[z<=-1/4] = float('nan')
-        u = torch.cos(x[:,0]).reshape(-1,1,1,1,1).round(decimals=5)
-        m = torch.tan(x[:,0]).reshape(-1,1,1,1,1).round(decimals=5)
+        u = torch.cos(x[:,0]).reshape(-1,1,1,1,1).round(decimals=7)
+        m = torch.tan(x[:,0]).reshape(-1,1,1,1,1).round(decimals=7)
         #print(torch.nan_to_num(z,nan=0))
         #print(I.shape)
         I = 3*self.Delta**2*torch.nan_to_num(torch.nan_to_num(m**2,nan=0)/(4*z+1)/abs(B)*(u**2-(z-u**2)**2).sqrt()/np.pi**2/2,nan=0,posinf=0)
@@ -332,7 +333,7 @@ class Graphene_SS:
     def total(self):
         #D_inter_xx = self.inter()
         # D_intra_xx,D_intra_yy = self.intra()
-        D_deter = (self.inter_xx()+self.intra_xx())*(self.inter_yy()+self.intra_yy())
+        D_deter = (self.intra_xx()+self.inter_xx())*(self.intra_yy()+self.inter_yy())
         return D_deter
 ############################################################################# Lorentzian function
 ############################################################################
