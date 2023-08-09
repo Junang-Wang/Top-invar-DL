@@ -104,7 +104,7 @@ def train_part(model,optimizer,train_loader,valid_loader, epochs = 1, learning_r
           print()
           adjust_epoch_count += 1
           if epoch > 6 and adjust_epoch_count > 3:
-            if loss_history[epoch-3:epoch+1].mean() >= 0.95*loss_history[epoch-7:epoch-3].mean():
+            if loss_history[epoch-3:epoch+1].mean() >= 0.90*loss_history[epoch-7:epoch-3].mean():
               adjust_learning_rate(optimizer=optimizer,lrd= learning_rate_decay)
               print(f'{loss_history[epoch-3:epoch+1].mean():.2f} >= {0.95*loss_history[epoch-7:epoch-3].mean():.2f}')
               # adjust learning rate if loss has not decrease in 3 epochs
@@ -192,3 +192,25 @@ def check_accuary(dataloader,model,verbose=False):
         print(f'Got {num_7:d} / {num_samples:d} wrong {acc_7:.2f} preds as larger than 6')
            
     return acc
+
+def check_accuary_density(dataloader,model,bins,range):
+  num_correct = 0
+  num_samples = 0
+  density = torch.zeros(bins)
+  correct_density = torch.zeros(bins)
+  with torch.no_grad():
+    for x,y,z in dataloader:
+      x = x.to('cuda')
+      y = y.to('cuda')
+      z = z.to('cuda')
+      preds = torch.argmax(model(x),dim=1)
+      num_correct += (preds == y).sum()
+      num_samples += preds.size(0)
+      density = density + torch.histogram(z.cpu().double(),bins=bins,range = range)[0]
+      z[preds!=y] = -100
+      correct_density = correct_density + torch.histogram(z.cpu().double(),bins=bins,range = range)[0]
+
+    acc = float(num_correct) / num_samples  
+    acc_density = correct_density/density
+    print(f'Got {num_correct:d} / {num_samples:d} correct {acc:.2f}')
+  return (acc,acc_density)

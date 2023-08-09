@@ -1,21 +1,63 @@
 \relax 
+\citation{carleo2019machine,carrasquilla2020machine,johnston2022perspective}
+\citation{carrasquilla2017machine,wang2016discovering,tanaka2017detection,zhang2018machine}
+\citation{carleo2017solving,sharir2020deep}
+\citation{chen2018symmetry,wu2019solving,nagai2017self,liu2017self}
+\citation{wang2022topological}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Dirac model and higher order band touching points}{1}{}\protected@file@percent }
-\newlabel{eq:SS}{{6}{1}}
-\newlabel{eq:Dxx }{{8}{1}}
-\newlabel{eq:Dyy }{{9}{1}}
+\newlabel{eq:SS}{{6}{2}}
+\newlabel{eq:Dxx }{{8}{2}}
+\newlabel{eq:Dyy }{{9}{2}}
 \newlabel{eq:D}{{10}{2}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Amplitude of $ |D| $ with $ mu $ and $ B $ varying in the range of $ \left (-3,3\right ) $. Inset figure shows variation of $ |D| $ with $ B $ varying and $ mu =0 $. }}{2}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Amplitude of $ |D| $ with $ mu_0 $ and $ B $ varying in the range of $ \left (-3,3\right ) $. Inset figure shows variation of $ |D| $ with $ B $ varying and $ \mu _0 =0 $. }}{2}{}\protected@file@percent }
 \newlabel{fig: Deter_D_3D}{{1}{2}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Total absolute vorticity}{2}{}\protected@file@percent }
+\citation{lecun1998gradient,krizhevsky2012imagenet,goodfellow2016deep}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Total absolute vorticity}{3}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {2}Parabolic model}{3}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {3}Training data set}{3}{}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Training data set example. The first row illustrates the determinant of superfluid stiffness for a parabolic model with $ \mu _0 $ varying in the range of $ \left (-3,3\right ) $, $ \mu _{\textrm  {off}} = B_{\textrm  {off}} = 2$ . The second row represents the determinant for a Dirac model($ n=1 $) where $ \mu _0 $ varies in the same range. The corresponding vorticity is shown above the matrix.}}{3}{}\protected@file@percent }
 \newlabel{fig: Training Data}{{2}{3}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Graphene model}{4}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Total absolute vorticity of graphene}{4}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Neural network}{4}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Schematic of the machine learning workflow and the structure of the convolutional neural network.}}{5}{}\protected@file@percent }
-\newlabel{fig: Neural network}{{3}{5}}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Performance of the neural network with respect to different validation and test data sets.}}{5}{}\protected@file@percent }
-\newlabel{tab:Performance}{{1}{5}}
-\gdef \@abspage@last{5}
+\citation{hinton1995wake}
+\citation{kingma2014adam}
+\citation{paszke2019pytorch}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Neural network}{4}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Schematic of the machine learning workflow and the structure of the convolutional neural network.}}{4}{}\protected@file@percent }
+\newlabel{fig: Neural network}{{3}{4}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Graphene model}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Total absolute vorticity of graphene}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}The performance of neural network}{5}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces (a) The performance of the network versus the number of training samples. The green, blue and red dots represent the accuracy of the first (i) and the second (ii) validation data set and (iii) graphene data, respectively, reaching an accuracy $ 99.60 \% $, $ 99.16 \% $ and $ 95.00 \% $ with training on $ 3.5 \times 10^3 $ samples. One can obverse that the accuracies of all data sets increase with more training data. (b) Sketch of graphene spectrum in momentum space, projecting on $ k_y $ axis, with two Dirac points locate at $ \mu _0=0 $. The green and red box depict two examples of previous discussed scanning windows concentrated at $ \mu _0=0 $ and $ \mu _{0} = 4.2 $, range in $ \left (\mu _0 -2,\mu _0 +2\right ) $. The green box predicts the total absolute vorticity $ w $ equal to $ 2 $ while the red box predicts $ w=0 $. The figure on the right hand side demonstrates the our network's performance in $ 15 $ energy bins, achieving high accuracy around $ 100 \% $, except for a drop to approximately $ 69 \% $ in the bins $ 1.67<|\mu _0|<2.33$. The accuracy drop is due to ambiguity caused by the proximity of the Dirac points to the edge of the scanning windows. }}{6}{}\protected@file@percent }
+\newlabel{fig:Acc_density_spectrum}{{4}{6}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Performance of the neural network training by $ N_{\textrm  {trian}} = 3500 $ with respect to different validation and test data sets.}}{6}{}\protected@file@percent }
+\newlabel{tab:Performance}{{1}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Chiral symmetry broken model}{7}{}\protected@file@percent }
+\newlabel{eq: Modified Graphene}{{23}{7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Train the network}{7}{}\protected@file@percent }
+\bibstyle{unsrt}
+\bibdata{refs}
+\bibcite{carleo2019machine}{{1}{}{{}}{{}}}
+\bibcite{carrasquilla2020machine}{{2}{}{{}}{{}}}
+\bibcite{johnston2022perspective}{{3}{}{{}}{{}}}
+\bibcite{carrasquilla2017machine}{{4}{}{{}}{{}}}
+\bibcite{wang2016discovering}{{5}{}{{}}{{}}}
+\bibcite{tanaka2017detection}{{6}{}{{}}{{}}}
+\bibcite{zhang2018machine}{{7}{}{{}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces (a) The performance of the network to chiral symmetric broken systems versus the number of training samples. The green, blue and red dots represent the accuracy of the first (iv) and the second (v) validation data set and (vi) modified graphene data, respectively, reaching an accuracy $ 98.26 \% $, $ 98.18 \% $ and $ 90.54 \% $ with training on $ 4 \times 10^4 $ samples. The accuracies of all data sets increase with more training data. (b) Sketch of graphene spectrum in momentum space, projecting on $ k_y $ axis, with two Dirac points with $ \mu _0=0 $, $ \delta \mu = 1.2 $. The green, red and blue boxes depict two examples of previous discussed scanning windows concentrated at $ \mu _0=0 $, $ \mu _{0} = 4.2 $ and $ \mu _0 = -2.2 $, range in $ \left (\mu _0 -2,\mu _0 +2\right ) $. The green box predicts the total absolute vorticity $ w $ equal to $ 2 $ while the red and blue box predicts $ w=0 $ and $ w=1 $,respectively. The figure on the right hand side demonstrates the our network's performance in $ 15 $ energy bins, achieving high accuracy around $ 100 \% $, except for a drop in the bins $ 1<|\mu _0|<3$. The accuracy drop is due to ambiguity caused by the proximity of the Dirac points to the edge of the scanning windows.}}{8}{}\protected@file@percent }
+\newlabel{fig:Acc_density_spectrum_broken}{{5}{8}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Performance of the neural network training by $ N_{\textrm  {trian}} = 4 \times 10^4 $ with respect to different validation and test data sets.}}{8}{}\protected@file@percent }
+\newlabel{tab:Performance}{{2}{8}}
+\bibcite{carleo2017solving}{{8}{}{{}}{{}}}
+\bibcite{sharir2020deep}{{9}{}{{}}{{}}}
+\bibcite{chen2018symmetry}{{10}{}{{}}{{}}}
+\bibcite{wu2019solving}{{11}{}{{}}{{}}}
+\bibcite{nagai2017self}{{12}{}{{}}{{}}}
+\bibcite{liu2017self}{{13}{}{{}}{{}}}
+\bibcite{wang2022topological}{{14}{}{{}}{{}}}
+\bibcite{lecun1998gradient}{{15}{}{{}}{{}}}
+\bibcite{krizhevsky2012imagenet}{{16}{}{{}}{{}}}
+\bibcite{goodfellow2016deep}{{17}{}{{}}{{}}}
+\bibcite{hinton1995wake}{{18}{}{{}}{{}}}
+\bibcite{kingma2014adam}{{19}{}{{}}{{}}}
+\bibcite{paszke2019pytorch}{{20}{}{{}}{{}}}
+\providecommand\NAT@force@numbers{}\NAT@force@numbers
+\gdef \@abspage@last{9}

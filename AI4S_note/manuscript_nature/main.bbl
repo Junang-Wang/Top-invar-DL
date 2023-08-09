@@ -1,0 +1,126 @@
+\begin{thebibliography}{10}
+\urlstyle{rm}
+\expandafter\ifx\csname url\endcsname\relax
+  \def\url#1{\texttt{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+\expandafter\ifx\csname doiprefix\endcsname\relax\def\doiprefix{DOI: }\fi
+\providecommand{\bibinfo}[2]{#2}
+\providecommand{\eprint}[2][]{\url{#2}}
+
+\bibitem{carleo2019machine}
+\bibinfo{author}{Carleo, G.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Machine learning and the physical
+  sciences}}.
+\newblock {\emph{\JournalTitle{Reviews of Modern Physics}}}
+  \textbf{\bibinfo{volume}{91}}, \bibinfo{pages}{045002}
+  (\bibinfo{year}{2019}).
+
+\bibitem{carrasquilla2020machine}
+\bibinfo{author}{Carrasquilla, J.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Machine learning for quantum
+  matter}}.
+\newblock {\emph{\JournalTitle{Advances in Physics: X}}}
+  \textbf{\bibinfo{volume}{5}}, \bibinfo{pages}{1797528}
+  (\bibinfo{year}{2020}).
+
+\bibitem{johnston2022perspective}
+\bibinfo{author}{Johnston, S.}, \bibinfo{author}{Khatami, E.} \&
+  \bibinfo{author}{Scalettar, R.}
+\newblock \bibinfo{journal}{\bibinfo{title}{A perspective on machine learning
+  and data science for strongly correlated electron problems}}.
+\newblock {\emph{\JournalTitle{Carbon Trends}}} \textbf{\bibinfo{volume}{9}},
+  \bibinfo{pages}{100231} (\bibinfo{year}{2022}).
+
+\bibitem{carrasquilla2017machine}
+\bibinfo{author}{Carrasquilla, J.} \& \bibinfo{author}{Melko, R.~G.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Machine learning phases of
+  matter}}.
+\newblock {\emph{\JournalTitle{Nature Physics}}} \textbf{\bibinfo{volume}{13}},
+  \bibinfo{pages}{431--434} (\bibinfo{year}{2017}).
+
+\bibitem{wang2016discovering}
+\bibinfo{author}{Wang, L.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Discovering phase transitions with
+  unsupervised learning}}.
+\newblock {\emph{\JournalTitle{Physical Review B}}}
+  \textbf{\bibinfo{volume}{94}}, \bibinfo{pages}{195105}
+  (\bibinfo{year}{2016}).
+
+\bibitem{tanaka2017detection}
+\bibinfo{author}{Tanaka, A.} \& \bibinfo{author}{Tomiya, A.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Detection of phase transition via
+  convolutional neural networks}}.
+\newblock {\emph{\JournalTitle{Journal of the Physical Society of Japan}}}
+  \textbf{\bibinfo{volume}{86}}, \bibinfo{pages}{063001}
+  (\bibinfo{year}{2017}).
+
+\bibitem{zhang2018machine}
+\bibinfo{author}{Zhang, P.}, \bibinfo{author}{Shen, H.} \&
+  \bibinfo{author}{Zhai, H.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Machine learning topological
+  invariants with neural networks}}.
+\newblock {\emph{\JournalTitle{Physical review letters}}}
+  \textbf{\bibinfo{volume}{120}}, \bibinfo{pages}{066401}
+  (\bibinfo{year}{2018}).
+
+\bibitem{carleo2017solving}
+\bibinfo{author}{Carleo, G.} \& \bibinfo{author}{Troyer, M.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Solving the quantum many-body
+  problem with artificial neural networks}}.
+\newblock {\emph{\JournalTitle{Science}}} \textbf{\bibinfo{volume}{355}},
+  \bibinfo{pages}{602--606} (\bibinfo{year}{2017}).
+
+\bibitem{sharir2020deep}
+\bibinfo{author}{Sharir, O.}, \bibinfo{author}{Levine, Y.},
+  \bibinfo{author}{Wies, N.}, \bibinfo{author}{Carleo, G.} \&
+  \bibinfo{author}{Shashua, A.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Deep autoregressive models for the
+  efficient variational simulation of many-body quantum systems}}.
+\newblock {\emph{\JournalTitle{Physical review letters}}}
+  \textbf{\bibinfo{volume}{124}}, \bibinfo{pages}{020503}
+  (\bibinfo{year}{2020}).
+
+\bibitem{chen2018symmetry}
+\bibinfo{author}{Chen, C.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Symmetry-enforced self-learning
+  monte carlo method applied to the holstein model}}.
+\newblock {\emph{\JournalTitle{Physical Review B}}}
+  \textbf{\bibinfo{volume}{98}}, \bibinfo{pages}{041102}
+  (\bibinfo{year}{2018}).
+
+\bibitem{wu2019solving}
+\bibinfo{author}{Wu, D.}, \bibinfo{author}{Wang, L.} \& \bibinfo{author}{Zhang,
+  P.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Solving statistical mechanics using
+  variational autoregressive networks}}.
+\newblock {\emph{\JournalTitle{Physical review letters}}}
+  \textbf{\bibinfo{volume}{122}}, \bibinfo{pages}{080602}
+  (\bibinfo{year}{2019}).
+
+\bibitem{nagai2017self}
+\bibinfo{author}{Nagai, Y.}, \bibinfo{author}{Shen, H.}, \bibinfo{author}{Qi,
+  Y.}, \bibinfo{author}{Liu, J.} \& \bibinfo{author}{Fu, L.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Self-learning monte carlo method:
+  Continuous-time algorithm}}.
+\newblock {\emph{\JournalTitle{Physical Review B}}}
+  \textbf{\bibinfo{volume}{96}}, \bibinfo{pages}{161102}
+  (\bibinfo{year}{2017}).
+
+\bibitem{liu2017self}
+\bibinfo{author}{Liu, J.}, \bibinfo{author}{Shen, H.}, \bibinfo{author}{Qi,
+  Y.}, \bibinfo{author}{Meng, Z.~Y.} \& \bibinfo{author}{Fu, L.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Self-learning monte carlo method
+  and cumulative update in fermion systems}}.
+\newblock {\emph{\JournalTitle{Physical Review B}}}
+  \textbf{\bibinfo{volume}{95}}, \bibinfo{pages}{241104}
+  (\bibinfo{year}{2017}).
+
+\bibitem{wang2022topological}
+\bibinfo{author}{Wang, J.-A.}, \bibinfo{author}{Assili, M.} \&
+  \bibinfo{author}{Kotetes, P.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Topological quantization of
+  superfluid stiffness in dirac materials}}.
+\newblock {\emph{\JournalTitle{arXiv preprint arXiv:2211.07676}}}
+  (\bibinfo{year}{2022}).
+
+\end{thebibliography}

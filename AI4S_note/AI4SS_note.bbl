@@ -1,0 +1,112 @@
+\begin{thebibliography}{10}
+
+\bibitem{carleo2019machine}
+Giuseppe Carleo, Ignacio Cirac, Kyle Cranmer, Laurent Daudet, Maria Schuld,
+  Naftali Tishby, Leslie Vogt-Maranto, and Lenka Zdeborov{\'a}.
+\newblock Machine learning and the physical sciences.
+\newblock {\em Reviews of Modern Physics}, 91(4):045002, 2019.
+
+\bibitem{carrasquilla2020machine}
+Juan Carrasquilla.
+\newblock Machine learning for quantum matter.
+\newblock {\em Advances in Physics: X}, 5(1):1797528, 2020.
+
+\bibitem{johnston2022perspective}
+Steven Johnston, Ehsan Khatami, and Richard Scalettar.
+\newblock A perspective on machine learning and data science for strongly
+  correlated electron problems.
+\newblock {\em Carbon Trends}, 9:100231, 2022.
+
+\bibitem{carrasquilla2017machine}
+Juan Carrasquilla and Roger~G Melko.
+\newblock Machine learning phases of matter.
+\newblock {\em Nature Physics}, 13(5):431--434, 2017.
+
+\bibitem{wang2016discovering}
+Lei Wang.
+\newblock Discovering phase transitions with unsupervised learning.
+\newblock {\em Physical Review B}, 94(19):195105, 2016.
+
+\bibitem{tanaka2017detection}
+Akinori Tanaka and Akio Tomiya.
+\newblock Detection of phase transition via convolutional neural networks.
+\newblock {\em Journal of the Physical Society of Japan}, 86(6):063001, 2017.
+
+\bibitem{zhang2018machine}
+Pengfei Zhang, Huitao Shen, and Hui Zhai.
+\newblock Machine learning topological invariants with neural networks.
+\newblock {\em Physical review letters}, 120(6):066401, 2018.
+
+\bibitem{carleo2017solving}
+Giuseppe Carleo and Matthias Troyer.
+\newblock Solving the quantum many-body problem with artificial neural
+  networks.
+\newblock {\em Science}, 355(6325):602--606, 2017.
+
+\bibitem{sharir2020deep}
+Or~Sharir, Yoav Levine, Noam Wies, Giuseppe Carleo, and Amnon Shashua.
+\newblock Deep autoregressive models for the efficient variational simulation
+  of many-body quantum systems.
+\newblock {\em Physical review letters}, 124(2):020503, 2020.
+
+\bibitem{chen2018symmetry}
+Chuang Chen, Xiao~Yan Xu, Junwei Liu, George Batrouni, Richard Scalettar, and
+  Zi~Yang Meng.
+\newblock Symmetry-enforced self-learning monte carlo method applied to the
+  holstein model.
+\newblock {\em Physical Review B}, 98(4):041102, 2018.
+
+\bibitem{wu2019solving}
+Dian Wu, Lei Wang, and Pan Zhang.
+\newblock Solving statistical mechanics using variational autoregressive
+  networks.
+\newblock {\em Physical review letters}, 122(8):080602, 2019.
+
+\bibitem{nagai2017self}
+Yuki Nagai, Huitao Shen, Yang Qi, Junwei Liu, and Liang Fu.
+\newblock Self-learning monte carlo method: Continuous-time algorithm.
+\newblock {\em Physical Review B}, 96(16):161102, 2017.
+
+\bibitem{liu2017self}
+Junwei Liu, Huitao Shen, Yang Qi, Zi~Yang Meng, and Liang Fu.
+\newblock Self-learning monte carlo method and cumulative update in fermion
+  systems.
+\newblock {\em Physical Review B}, 95(24):241104, 2017.
+
+\bibitem{wang2022topological}
+Jun-Ang Wang, Mohamed Assili, and Panagiotis Kotetes.
+\newblock Topological quantization of superfluid stiffness in dirac materials.
+\newblock {\em arXiv preprint arXiv:2211.07676}, 2022.
+
+\bibitem{lecun1998gradient}
+Yann LeCun, L{\'e}on Bottou, Yoshua Bengio, and Patrick Haffner.
+\newblock Gradient-based learning applied to document recognition.
+\newblock {\em Proceedings of the IEEE}, 86(11):2278--2324, 1998.
+
+\bibitem{krizhevsky2012imagenet}
+Alex Krizhevsky, Ilya Sutskever, and Geoffrey~E Hinton.
+\newblock Imagenet classification with deep convolutional neural networks.
+\newblock {\em Advances in neural information processing systems}, 25, 2012.
+
+\bibitem{goodfellow2016deep}
+Ian Goodfellow, Yoshua Bengio, and Aaron Courville.
+\newblock {\em Deep learning}.
+\newblock MIT press, 2016.
+
+\bibitem{hinton1995wake}
+Geoffrey~E Hinton, Peter Dayan, Brendan~J Frey, and Radford~M Neal.
+\newblock The" wake-sleep" algorithm for unsupervised neural networks.
+\newblock {\em Science}, 268(5214):1158--1161, 1995.
+
+\bibitem{kingma2014adam}
+Diederik~P Kingma and Jimmy Ba.
+\newblock Adam: A method for stochastic optimization.
+\newblock {\em arXiv preprint arXiv:1412.6980}, 2014.
+
+\bibitem{paszke2019pytorch}
+Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury, Gregory
+  Chanan, Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca Antiga, et~al.
+\newblock Pytorch: An imperative style, high-performance deep learning library.
+\newblock {\em Advances in neural information processing systems}, 32, 2019.
+
+\end{thebibliography}

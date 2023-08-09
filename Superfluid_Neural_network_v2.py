@@ -16,6 +16,20 @@ class Superfluid_Dataset(torch.utils.data.Dataset):
     
     def __len__(self):
         return self.n_samples
+
+#-------attach mu0 label
+class Superfluid_mu0_Dataset(torch.utils.data.Dataset):
+    def __init__(self,train_x,train_y,train_mu):
+        #data loading
+        self.x = train_x 
+        self.y = train_y 
+        self.z = train_mu
+        self.n_samples = self.x.shape[0]
+    def __getitem__(self,index):
+        return self.x[index], self.y[index],self.z[index]
+
+    def __len__(self):
+        return self.n_samples
 ###############################################################################
 # plain 1D Conv network block
 ###############################################################################
